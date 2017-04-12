@@ -28,4 +28,8 @@ public final class CompressionEngine {
     public static Message decompressMessage(String packet) {
         return Message.fromString(LZString.decompress(packet));
     }
+
+    public static String compressString(String s){
+        return LZString.compress(s);
+    }
 }
