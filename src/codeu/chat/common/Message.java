@@ -58,10 +58,6 @@ public final class Message {
     }
   };
 
-    //Global fields for utilizing gson
-  private static final GsonBuilder builder = new GsonBuilder();
-  private static final Gson gson = builder.create();
-
   public final Uuid id;
   public final Uuid previous;
   public final Time creation;
@@ -79,20 +75,4 @@ public final class Message {
     this.content = content;
 
   }
-
-    /**
-     * @return String representation of Message, formatted
-     * as a JSON object
-     */
-    public String toString(){
-        return gson.toJson(this);
-    }
-
-    /**
-     * @param str The string that is used to build the message
-     * @return A message built from the passed in JSON string
-     */
-    public static Message fromString(String str){
-        return gson.fromJson(str, Message.class);
-    }
 }
