@@ -22,36 +22,22 @@ import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
+import codeu.chat.compression.CompressionEngine;
 
 public final class Message {
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
-
     @Override
     public void write(OutputStream out, Message value) throws IOException {
-
-      Uuids.SERIALIZER.write(out, value.id);
-      Uuids.SERIALIZER.write(out, value.next);
-      Uuids.SERIALIZER.write(out, value.previous);
-      Time.SERIALIZER.write(out, value.creation);
-      Uuids.SERIALIZER.write(out, value.author);
-      Serializers.STRING.write(out, value.content);
-
+      byte[] message = CompressionEngine.compressMessage(value);
+      Serializers.BYTES.write(out, message);
     }
 
     @Override
     public Message read(InputStream in) throws IOException {
-
-      return new Message(
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Time.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Serializers.STRING.read(in)
-      );
-
+      byte[] message = Serializers.BYTES.read(in);
+      return CompressionEngine.decompressMessage(message);
     }
   };
 
@@ -72,4 +58,33 @@ public final class Message {
     this.content = content;
 
   }
+
+    /**
+    * Formerly write
+    */
+    public static void toStream(OutputStream out, Message value) throws IOException {
+
+      Uuids.SERIALIZER.write(out, value.id);
+      Uuids.SERIALIZER.write(out, value.next);
+      Uuids.SERIALIZER.write(out, value.previous);
+      Time.SERIALIZER.write(out, value.creation);
+      Uuids.SERIALIZER.write(out, value.author);
+      Serializers.STRING.write(out, value.content);
+
+    }
+
+    /**
+    * Formerly read
+    */
+    public static Message fromStream(InputStream in) throws IOException {
+
+      return new Message(
+          Uuids.SERIALIZER.read(in),
+          Uuids.SERIALIZER.read(in),
+          Uuids.SERIALIZER.read(in),
+          Time.SERIALIZER.read(in),
+          Uuids.SERIALIZER.read(in),
+          Serializers.STRING.read(in)
+      );
+    }
 }
