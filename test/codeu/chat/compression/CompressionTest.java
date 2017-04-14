@@ -10,11 +10,8 @@ package codeu.chat.compression;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import codeu.chat.compression.CompressionEngine;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
 import codeu.chat.common.Time;
 import codeu.chat.common.Message;
-import com.diogoduailibe.lzstring4j.LZString;
 
 public final class CompressionTest{
 
@@ -26,14 +23,6 @@ public final class CompressionTest{
 	public void testCompression(){
 		// Create chained Uuid's and Time in order to create a realistic message
 		final String ids = "100.200.300";
-		final Uuid next = Uuids.fromString(ids);
-		final Uuid cur = next.root();
-		final Uuid prev = cur.root();
 		final Time time = Time.now();
-		Message message1 = new Message(cur, next, prev, time, cur, ids);
-
-		byte[] s = CompressionEngine.compressMessage(message1);
-		System.out.println(s);
-		//assertEquals(cur.id(), 200);
 	}
 }

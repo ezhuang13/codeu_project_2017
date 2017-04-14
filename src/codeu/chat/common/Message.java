@@ -23,9 +23,6 @@ import codeu.chat.util.Serializers;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 public final class Message {
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
