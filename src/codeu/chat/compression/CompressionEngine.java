@@ -67,6 +67,7 @@ public final class CompressionEngine {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
 
+        //Is this needed?
         deflater.finish();
 
         byte[] buffer = new byte[1024];
@@ -78,8 +79,9 @@ public final class CompressionEngine {
 
         deflater.end();
 
-        System.out.println("Original: " + data.length / 1024 + " Kb");  
-        System.out.println("Compressed: " + output.length / 1024 + " Kb");  
+        //TODO: Create logging for % compression
+        //System.out.println("Original: " + data.length + " bytes");  
+        //System.out.println("Compressed: " + output.length + " bytes");  
         return output;  
     }
 
@@ -88,6 +90,7 @@ public final class CompressionEngine {
      * @return A larger byte array that represents the original data
      */
     private static byte[] decompress(byte[] data){
+
         Inflater inflater = new Inflater();
         inflater.setInput(data);
 

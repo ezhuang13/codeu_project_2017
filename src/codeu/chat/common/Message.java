@@ -28,12 +28,18 @@ public final class Message {
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
+    /**
+    * @description Now sends to ostream a message represented as a compressed byte[]
+    */
     @Override
     public void write(OutputStream out, Message value) throws IOException {
       byte[] message = CompressionEngine.compressMessage(value);
       Serializers.BYTES.write(out, message);
     }
 
+    /**
+    * @description Deserializes compressed byte[], and then decompressed to original message
+    */
     @Override
     public Message read(InputStream in) throws IOException {
       byte[] message = Serializers.BYTES.read(in);
@@ -59,32 +65,44 @@ public final class Message {
 
   }
 
-    /**
-    * Formerly write
-    */
-    public static void toStream(OutputStream out, Message value) throws IOException {
+  /**
+  * @param a, b The messages that are compared to each other
+  * @return true if the fields of the messages are identical, otherwise false
+  */
+  public static boolean equals(Message a, Message b){
+    //Only check the next field of Uuids, because this performs a deep check and
+    //we assume cur and prev are linked
+    return a.content.equals(b.content) && a.creation.compareTo(b.creation) == 0 &&
+    Uuids.equals(a.author, b.author) && Uuids.equals(a.next, b.next);
+  }
 
-      Uuids.SERIALIZER.write(out, value.id);
-      Uuids.SERIALIZER.write(out, value.next);
-      Uuids.SERIALIZER.write(out, value.previous);
-      Time.SERIALIZER.write(out, value.creation);
-      Uuids.SERIALIZER.write(out, value.author);
-      Serializers.STRING.write(out, value.content);
 
-    }
+  /**
+  * @brief Formerly the overriden Serializer write
+  */
+  public static void toStream(OutputStream out, Message value) throws IOException {
 
-    /**
-    * Formerly read
-    */
-    public static Message fromStream(InputStream in) throws IOException {
+    Uuids.SERIALIZER.write(out, value.id);
+    Uuids.SERIALIZER.write(out, value.next);
+    Uuids.SERIALIZER.write(out, value.previous);
+    Time.SERIALIZER.write(out, value.creation);
+    Uuids.SERIALIZER.write(out, value.author);
+    Serializers.STRING.write(out, value.content);
 
-      return new Message(
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Time.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Serializers.STRING.read(in)
-      );
-    }
+  }
+
+  /**
+  * @brief Formerly the overriden Serializer read
+  */
+  public static Message fromStream(InputStream in) throws IOException {
+
+    return new Message(
+        Uuids.SERIALIZER.read(in),
+        Uuids.SERIALIZER.read(in),
+        Uuids.SERIALIZER.read(in),
+        Time.SERIALIZER.read(in),
+        Uuids.SERIALIZER.read(in),
+        Serializers.STRING.read(in)
+    );
+  }
 }

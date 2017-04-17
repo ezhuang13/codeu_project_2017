@@ -3,26 +3,54 @@
  * @description Testing suite for compression
 */
 
-//TODO: Add integration tests
-
 package codeu.chat.compression;
 
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import codeu.chat.compression.CompressionEngine;
 import codeu.chat.common.Time;
+import codeu.chat.common.Uuid;
+import codeu.chat.common.Uuids;
 import codeu.chat.common.Message;
 
 public final class CompressionTest{
 
-	//TODO: gson does not properly convert Uuids. Will probably have to revise
-	//CompressionEngine to convert Uuid's to a string first, and pass
-	//in a pseudo-message class in order to handle
+	//Question: would it be better to create an array of randomized messages, and
+	//test copies of each one?
+	private Message testMsg;
 
-	@Test
-	public void testCompression(){
+	@Before
+	public void setupTestMessage(){
 		// Create chained Uuid's and Time in order to create a realistic message
+		final String authString = "50";
 		final String ids = "100.200.300";
 		final Time time = Time.now();
+		Uuid author = Uuids.fromString(authString);
+		Uuid next = Uuids.fromString(ids);
+		Uuid id = next.root();
+		Uuid prev = id.root();
+		testMsg = new Message(id, next, prev, time, author, "I am a test message!\naAbB319@*!^&[]{}~ ZCXv");
+	}
+
+	@Test
+	public void testMessageCompression(){
+		Message copy = CompressionEngine.decompressMessage(CompressionEngine.compressMessage(testMsg));
+		assertTrue(Message.equals(testMsg, copy));
+	}
+
+	@Test
+	public void testMessageReadWrite(){
+		try{
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+			Message.SERIALIZER.write(output, testMsg);
+			ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+			assertTrue(Message.equals(testMsg, Message.SERIALIZER.read(input)));
+        }catch (IOException e){
+            e.printStackTrace();
+        }
 	}
 }
