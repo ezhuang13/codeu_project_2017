@@ -14,6 +14,8 @@
 
 package codeu.chat.server;
 
+import java.sql.SQLException;
+
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.Before;
@@ -21,10 +23,14 @@ import org.junit.Before;
 import codeu.chat.common.Conversation;
 import codeu.chat.common.Message;
 import codeu.chat.common.RawController;
-import codeu.chat.common.Time;
 import codeu.chat.common.User;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
+
+import codeu.chat.database.Database;
+import codeu.chat.server.database.UserSchema;
+import codeu.chat.server.authentication.Authentication;
+import codeu.chat.authentication.AuthenticationCode;
 
 public final class RawControllerTest {
 
@@ -35,40 +41,56 @@ public final class RawControllerTest {
   private Uuid conversationId;
   private Uuid messageId;
 
-  @Before
-  public void doBefore() {
-    model = new Model();
-    controller = new Controller(Uuids.NULL, model);
+  private Database database;
+  private UserSchema userSchema;
+  private Authentication authentication;
 
-    userId = newTestId(1);
-    conversationId = newTestId(2);
-    messageId = newTestId(3);
+  private User user;
+
+  @Before
+  public void doBefore() throws SQLException {
+    // Setup the database.
+    database = new Database("test.db");
+    userSchema = new UserSchema();
+    userSchema.dropTable("users", database);
+    authentication = new Authentication(database);
+
+    model = new Model();
+    controller = new Controller(Uuid.NULL, model, authentication);
+
+    userId = new Uuid(1);
+    conversationId = new Uuid(2);
+    messageId = new Uuid(3);
   }
 
   @Test
-  public void testAddUser() {
+  public void testRegister() {
 
-    final User user = controller.newUser(userId, "user", Time.now());
+    final int result = controller.newUser("username", "password", Time.now());
+    assertEquals(result, AuthenticationCode.SUCCESS);
 
-    assertFalse(
-        "Check that user has a valid reference",
-        user == null);
-    assertTrue(
-        "Check that the user has the correct id",
-        Uuids.equals(user.id, userId));
+  }
+
+  @Test
+  public void testLogin() {
+
+    testRegister();
+    user = controller.login(userId, "username", "password", Time.now());
+    assertNotNull(user);
+
   }
 
   @Test
   public void testAddConversation() {
 
-    final User user = controller.newUser(userId, "user", Time.now());
+    testLogin();
 
     assertFalse(
         "Check that user has a valid reference",
         user == null);
     assertTrue(
         "Check that the user has the correct id",
-        Uuids.equals(user.id, userId));
+        Uuid.equals(user.id, userId));
 
     final Conversation conversation = controller.newConversation(
         conversationId,
@@ -81,20 +103,20 @@ public final class RawControllerTest {
         conversation == null);
     assertTrue(
         "Check that the conversation has the correct id",
-        Uuids.equals(conversation.id, conversationId));
+        Uuid.equals(conversation.id, conversationId));
   }
 
   @Test
   public void testAddMessage() {
 
-    final User user = controller.newUser(userId, "user", Time.now());
+    testLogin();
 
     assertFalse(
         "Check that user has a valid reference",
         user == null);
     assertTrue(
         "Check that the user has the correct id",
-        Uuids.equals(user.id, userId));
+        Uuid.equals(user.id, userId));
 
     final Conversation conversation = controller.newConversation(
         conversationId,
@@ -107,7 +129,7 @@ public final class RawControllerTest {
         conversation == null);
     assertTrue(
         "Check that the conversation has the correct id",
-        Uuids.equals(conversation.id, conversationId));
+        Uuid.equals(conversation.id, conversationId));
 
     final Message message = controller.newMessage(
         messageId,
@@ -121,15 +143,6 @@ public final class RawControllerTest {
         message == null);
     assertTrue(
         "Check that the message has the correct id",
-        Uuids.equals(message.id, messageId));
-  }
-
-  private static Uuid newTestId(final int id) {
-    return Uuids.complete(new Uuid() {
-      @Override
-      public Uuid root() { return null; }
-      @Override
-      public int id() { return id; }
-    });
+        Uuid.equals(message.id, messageId));
   }
 }

@@ -20,9 +20,12 @@ import java.io.OutputStream;
 
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
-import codeu.chat.common.Uuid;
+
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 import codeu.chat.common.Uuids;
 import codeu.chat.compression.CompressionEngine;
+
 
 public final class Message {
 
@@ -33,8 +36,10 @@ public final class Message {
     */
     @Override
     public void write(OutputStream out, Message value) throws IOException {
+      
       byte[] message = CompressionEngine.compressMessage(value);
       Serializers.BYTES.write(out, message);
+
     }
 
     /**
@@ -42,8 +47,10 @@ public final class Message {
     */
     @Override
     public Message read(InputStream in) throws IOException {
+
       byte[] message = Serializers.BYTES.read(in);
       return CompressionEngine.decompressMessage(message);
+
     }
   };
 
