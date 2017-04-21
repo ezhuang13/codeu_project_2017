@@ -6,8 +6,8 @@
 
 package codeu.chat.compression;
 
-import codeu.chat.common.Uuids;
-import codeu.chat.common.Time;
+import codeu.chat.util.Uuid;
+import codeu.chat.util.Time;
 import codeu.chat.common.Message;
 import codeu.chat.util.Serializers;
 
@@ -47,7 +47,7 @@ public final class CompressionEngine {
 
         ByteArrayInputStream byteMsg = new ByteArrayInputStream(packet);
         //Must create a filler message in order to satisfy compiler
-        Message msg = new Message(Uuids.NULL, Uuids.NULL, Uuids.NULL, Time.now(), Uuids.NULL, "");
+        Message msg = new Message(Uuid.NULL, Uuid.NULL, Uuid.NULL, Time.now(), Uuid.NULL, "");
         try {
             msg = Message.fromStream(byteMsg);
         }catch (IOException e){
