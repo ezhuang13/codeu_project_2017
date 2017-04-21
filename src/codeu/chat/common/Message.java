@@ -72,8 +72,8 @@ public final class Message {
   public static boolean equals(Message a, Message b){
     //Only check the next field of Uuids, because this performs a deep check and
     //we assume cur and prev are linked
-    return a.content.equals(b.content) && a.creation.compareTo(b.creation) == 0 &&
-    Uuids.equals(a.author, b.author) && Uuids.equals(a.next, b.next);
+    return a.content.equals(b.content) && a.creation.compareTo(b.creation) == 0
+    && Uuids.equals(a.author, b.author) && Uuids.equals(a.next, b.next);
   }
 
 

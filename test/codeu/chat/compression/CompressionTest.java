@@ -28,7 +28,9 @@ public final class CompressionTest{
 		// Create chained Uuid's and Time in order to create a realistic message
 		final String authString = "50";
 		final String ids = "100.200.300";
-		final Time time = Time.now();
+		// FIX: Time.now() no longer working
+		// final Time time = Time.now();
+		final Time time = Time.fromMs(12223456);
 		Uuid author = Uuids.fromString(authString);
 		Uuid next = Uuids.fromString(ids);
 		Uuid id = next.root();
