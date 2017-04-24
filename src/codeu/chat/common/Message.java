@@ -20,21 +20,25 @@ import java.io.OutputStream;
 
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public final class Message {
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
+
     @Override
     public void write(OutputStream out, Message value) throws IOException {
 
-      Uuids.SERIALIZER.write(out, value.id);
-      Uuids.SERIALIZER.write(out, value.next);
-      Uuids.SERIALIZER.write(out, value.previous);
+      Uuid.SERIALIZER.write(out, value.id);
+      Uuid.SERIALIZER.write(out, value.next);
+      Uuid.SERIALIZER.write(out, value.previous);
       Time.SERIALIZER.write(out, value.creation);
-      Uuids.SERIALIZER.write(out, value.author);
+      Uuid.SERIALIZER.write(out, value.author);
       Serializers.STRING.write(out, value.content);
 
     }
@@ -43,11 +47,11 @@ public final class Message {
     public Message read(InputStream in) throws IOException {
 
       return new Message(
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
+          Uuid.SERIALIZER.read(in),
+          Uuid.SERIALIZER.read(in),
+          Uuid.SERIALIZER.read(in),
           Time.SERIALIZER.read(in),
-          Uuids.SERIALIZER.read(in),
+          Uuid.SERIALIZER.read(in),
           Serializers.STRING.read(in)
       );
 
@@ -60,6 +64,9 @@ public final class Message {
   public final Uuid author;
   public final String content;
   public Uuid next;
+  //Global fields for utilizing gson
+  private static final GsonBuilder builder = new GsonBuilder();
+  private static final Gson gson = builder.create();
 
   public Message(Uuid id, Uuid next, Uuid previous, Time creation, Uuid author, String content) {
 
@@ -71,4 +78,20 @@ public final class Message {
     this.content = content;
 
   }
+
+    /**
+     * @return String representation of Message, formattted
+     * as a JSON object
+     */
+    public String toString(){
+        return gson.toJson(this);
+    }
+
+    /**
+     * @param str The string that is used to build the message
+     * @return A message built from the passed in JSON string
+     */
+    public static Message fromString(String str){
+        return gson.fromJson(str, Message.class);
+    }
 }

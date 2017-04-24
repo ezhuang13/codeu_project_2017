@@ -17,16 +17,15 @@ package codeu.chat;
 
 import java.io.IOException;
 
-import codeu.chat.common.Hub;
 import codeu.chat.common.Relay;
 import codeu.chat.common.Secret;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
 import codeu.chat.server.NoOpRelay;
 import codeu.chat.server.RemoteRelay;
+import codeu.chat.database.Database;
 import codeu.chat.server.Server;
 import codeu.chat.util.Logger;
 import codeu.chat.util.RemoteAddress;
+import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.ClientConnectionSource;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
@@ -48,13 +47,17 @@ final class ServerMain {
 
     LOG.info("============================= START OF LOG =============================");
 
-    final Uuid id = Uuids.fromString(args[0]);
+    final Uuid id = Uuid.fromString(args[0]);
     final byte[] secret = Secret.parse(args[1]);
 
     final int myPort = Integer.parseInt(args[2]);
 
-    final RemoteAddress relayAddress = args.length > 3 ?
-                                       RemoteAddress.parse(args[3]) :
+    // This is the directory where it is safe to store data accross runs
+    // of the server.
+    final String persistentPath = args[3];
+
+    final RemoteAddress relayAddress = args.length > 4 ?
+                                       RemoteAddress.parse(args[4]) :
                                        null;
 
     try (
@@ -63,7 +66,7 @@ final class ServerMain {
     ) {
 
       LOG.info("Starting server...");
-      runServer(id, secret, serverSource, relaySource);
+      runServer(id, secret, serverSource, relaySource, persistentPath + "/server.db");
 
     } catch (IOException ex) {
 
@@ -75,38 +78,32 @@ final class ServerMain {
   private static void runServer(Uuid id,
                                 byte[] secret,
                                 ConnectionSource serverSource,
-                                ConnectionSource relaySource) {
+                                ConnectionSource relaySource,
+                                String dbPath) {
 
     final Relay relay = relaySource == null ?
                         new NoOpRelay() :
                         new RemoteRelay(relaySource);
 
-    final Server server = new Server(id, secret, relay);
+    final Database database = new Database(dbPath);
 
-    LOG.info("Server object created.");
+    final Server server = new Server(id, secret, relay, database);
 
-    final Runnable hub = new Hub(serverSource, new Hub.Handler() {
+    LOG.info("Created server.");
 
-      @Override
-      public void handle(Connection connection) throws Exception {
+    while (true) {
+
+      try {
+
+        LOG.info("Established connection...");
+        final Connection connection = serverSource.connect();
+        LOG.info("Connection established.");
 
         server.handleConnection(connection);
 
+      } catch (IOException ex) {
+        LOG.error(ex, "Failed to establish connection.");
       }
-
-      @Override
-      public void onException(Exception ex) {
-
-        System.out.println("ERROR: Exception during server tick. Check log for details.");
-        LOG.error(ex, "Exception during server tick.");
-
-      }
-    });
-
-    LOG.info("Starting hub...");
-
-    hub.run();
-
-    LOG.info("Hub exited.");
+    }
   }
 }

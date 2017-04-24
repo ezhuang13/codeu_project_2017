@@ -22,10 +22,9 @@ import java.util.Map;
 import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
 import codeu.chat.common.Message;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Method;
+import codeu.chat.util.Uuid;
 
 public final class ClientMessage {
 
@@ -46,6 +45,9 @@ public final class ClientMessage {
 
   private final ClientUser userContext;
   private final ClientConversation conversationContext;
+
+  //TODO: How will compressing/encrypting messages affect the messages/conversations from
+  //the client side? (Ex: show messages)
 
   public ClientMessage(Controller controller, View view, ClientUser userContext,
                        ClientConversation conversationContext) {
@@ -97,10 +99,10 @@ public final class ClientMessage {
   }
 
   // For m-add command.
-  public void addMessage(Uuid author, Uuid conversation, String body) {
+  public void addMessage(Uuid author, Uuid token, Uuid conversation, String body) {
     final boolean validInputs = isValidBody(body) && (author != null) && (conversation != null);
 
-    final Message message = (validInputs) ? controller.newMessage(author, conversation, body) : null;
+    final Message message = (validInputs) ? controller.newMessage(author, token, conversation, body) : null;
 
     if (message == null) {
       System.out.format("Error: message not created - %s.\n",
@@ -204,7 +206,7 @@ public final class ClientMessage {
       Uuid nextMessageId = getCurrentMessageFetchId(replaceAll);
 
       //  Stay in loop until all messages read (up to safety limit)
-      while (!nextMessageId.equals(Uuids.NULL) && conversationContents.size() < MESSAGE_MAX_COUNT) {
+      while (!nextMessageId.equals(Uuid.NULL) && conversationContents.size() < MESSAGE_MAX_COUNT) {
 
         for (final Message msg : view.getMessages(nextMessageId, MESSAGE_FETCH_COUNT)) {
 
@@ -212,8 +214,8 @@ public final class ClientMessage {
 
           // Race: message possibly added since conversation fetched.  If that occurs,
           // pretend the newer messages do not exist - they'll get picked up next time).
-          if (msg.next.equals(Uuids.NULL) || msg.id.equals(conversationHead.lastMessage)) {
-            msg.next = Uuids.NULL;
+          if (msg.next.equals(Uuid.NULL) || msg.id.equals(conversationHead.lastMessage)) {
+            msg.next = Uuid.NULL;
             break;
           }
         }
