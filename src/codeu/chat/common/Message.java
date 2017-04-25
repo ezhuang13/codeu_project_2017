@@ -17,33 +17,68 @@ package codeu.chat.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
+import codeu.chat.util.Compression;
+import codeu.chat.util.Compressions;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
-import codeu.chat.compression.CompressionEngine;
 
 public final class Message {
+
+  public static final Compression<Message> COMPRESSION = new Compression<Message>(){
+
+    @Override
+    public byte[] compress(Message data){
+        ByteArrayOutputStream msgStream = new ByteArrayOutputStream();
+        try{
+            Message.toStream(msgStream, data);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        byte[] byteMsg = msgStream.toByteArray();
+
+        return Compressions.BYTES.compress(byteMsg);
+    }
+
+    @Override
+    public Message decompress(byte[] data) {
+
+        data = Compressions.BYTES.decompress(data);
+
+        ByteArrayInputStream byteMsg = new ByteArrayInputStream(data);
+        //Must create a filler message in order to satisfy compiler
+        Message msg = new Message(Uuids.NULL, Uuids.NULL, Uuids.NULL, Time.now(), Uuids.NULL, "");
+        try {
+            msg = Message.fromStream(byteMsg);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return msg;
+    }
+  };
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
     /**
-    * @description Now sends to ostream a message represented as a compressed byte[]
+    * @description Sends to outputstream a message represented as a compressed byte[]
     */
     @Override
     public void write(OutputStream out, Message value) throws IOException {
-      byte[] message = CompressionEngine.compressMessage(value);
+      byte[] message = COMPRESSION.compress(value);
       Serializers.BYTES.write(out, message);
     }
 
     /**
-    * @description Deserializes compressed byte[], and then decompressed to original message
+    * @description Deserializes compressed byte[] and then decompresses to original message
     */
     @Override
     public Message read(InputStream in) throws IOException {
       byte[] message = Serializers.BYTES.read(in);
-      return CompressionEngine.decompressMessage(message);
+      return COMPRESSION.decompress(message);
     }
   };
 

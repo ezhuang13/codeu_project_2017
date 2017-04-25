@@ -11,7 +11,6 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import codeu.chat.compression.CompressionEngine;
 import codeu.chat.common.Time;
 import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
@@ -40,7 +39,7 @@ public final class CompressionTest{
 
 	@Test
 	public void testMessageCompression(){
-		Message copy = CompressionEngine.decompressMessage(CompressionEngine.compressMessage(testMsg));
+		Message copy = Message.COMPRESSION.decompress(Message.COMPRESSION.compress(testMsg));
 		assertTrue(Message.equals(testMsg, copy));
 	}
 
