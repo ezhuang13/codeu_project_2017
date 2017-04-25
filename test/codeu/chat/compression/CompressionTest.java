@@ -32,7 +32,7 @@ public final class CompressionTest{
 	@Before
 	public void setupUuids(){
 		final String authString = "50";
-		final String ids = "100.200.300";
+		final String ids = "100.200.300.400.500.600.700.800";
 		author = Uuid.fromString(authString);
 		next = Uuid.fromString(ids);
 		id = next.root();
@@ -41,17 +41,17 @@ public final class CompressionTest{
 
 	@Before
 	public void setupTestMessage(){
-		testMsg = new Message(id, next, prev, time, author, "I am a test message!\naAbB319@*!^&[]{}~ ZCXv");
+		testMsg = new Message(id, next, prev, time, author, "I am a test message!\nPlease compress me!!!");
 	}
 
 	@Before
 	public void setupTestConvoSummary(){
-		testConvoSummary = new ConversationSummary(id, author, time, "Conversation between foo and bar");
+		testConvoSummary = new ConversationSummary(id, author, time, "This is the summary of a conversation between users foo and bar");
 	}
 
 	@Before
 	public void setupTestConvo(){
-		testConvo = new Conversation(id, author, time, "Another conversation between foo and bar");
+		testConvo = new Conversation(id, author, time, "This is another conversation between users foo and bar. Additionally, users have been added to the hash map.");
 		testConvo.users.add(author);
 		testConvo.users.add(next);
 	}
@@ -59,7 +59,7 @@ public final class CompressionTest{
 	//Question for ruiqi: what to do with tokens?
 	@Before
 	public void setupUser(){
-		testUser = new User(author, "Foo", time);
+		testUser = new User(author, "Mr. Foooooo", time);
 	}
 
 	@Test

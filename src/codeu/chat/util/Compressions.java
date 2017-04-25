@@ -1,7 +1,7 @@
 /**
  * @author Eric Zhuang, CodeU Project Group 6
- * @description Converts items into a compressed bytestream in order
- * to minimize bandwidth when sending messages
+ * @description Converts various objects into a compressed byte[] in order
+ * to minimize bandwidth when sending messages. Also allows messages to be decompressed.
 */ 
 
 package codeu.chat.util;
@@ -31,7 +31,6 @@ public final class Compressions{
 		@Override
 		public byte[] compress (byte[] data){
 
-			//TODO: Experiment with setting level of deflater for improved performance
 	        Deflater deflater = new Deflater();
 	        deflater.setInput(data);
 
@@ -40,7 +39,7 @@ public final class Compressions{
 	        //Is this needed?
 	        deflater.finish();
 
-	        byte[] buffer = new byte[1024];
+	        byte[] buffer = new byte[100];
 	        while (!deflater.finished()) {  
 	            int count = deflater.deflate(buffer);
 	            outputStream.write(buffer, 0, count);   
@@ -49,9 +48,6 @@ public final class Compressions{
 
 	        deflater.end();
 
-	        //TODO: Create logging for % compression
-	        //System.out.println("Original: " + data.length + " bytes");  
-	        //System.out.println("Compressed: " + output.length + " bytes");  
 	        return output;  
 
 		}
@@ -137,7 +133,7 @@ public final class Compressions{
       data = BYTES.decompress(data);
 
       ByteArrayInputStream byteConvo = new ByteArrayInputStream(data);
-      //Must create a filler message in order to satisfy compiler
+
       Conversation convo = new Conversation(Uuid.NULL, Uuid.NULL, Time.now(), "");
       try {
         convo = Conversation.fromStream(byteConvo);
@@ -172,7 +168,7 @@ public final class Compressions{
       data = Compressions.BYTES.decompress(data);
 
       ByteArrayInputStream byteConvoSummary = new ByteArrayInputStream(data);
-      //Must create a filler message in order to satisfy compiler
+
       ConversationSummary convoSummary = new ConversationSummary(Uuid.NULL, Uuid.NULL, Time.now(), "");
       try {
         convoSummary = ConversationSummary.fromStream(byteConvoSummary);
@@ -206,7 +202,7 @@ public final class Compressions{
       data = Compressions.BYTES.decompress(data);
 
       ByteArrayInputStream byteUser = new ByteArrayInputStream(data);
-      //Must create a filler message in order to satisfy compiler
+
       User userSummary = new User(Uuid.NULL, "", Time.now());
       try {
         userSummary = User.fromStream(byteUser);
