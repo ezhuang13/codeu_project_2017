@@ -24,8 +24,9 @@ import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Compression;
 import codeu.chat.util.Compressions;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
+import codeu.chat.util.Uuid;
+import codeu.chat.util.Time;
+
 
 public final class Message {
 
@@ -51,7 +52,7 @@ public final class Message {
 
         ByteArrayInputStream byteMsg = new ByteArrayInputStream(data);
         //Must create a filler message in order to satisfy compiler
-        Message msg = new Message(Uuids.NULL, Uuids.NULL, Uuids.NULL, Time.now(), Uuids.NULL, "");
+        Message msg = new Message(Uuid.NULL, Uuid.NULL, Uuid.NULL, Time.now(), Uuid.NULL, "");
         try {
             msg = Message.fromStream(byteMsg);
         }catch (IOException e){
@@ -68,8 +69,10 @@ public final class Message {
     */
     @Override
     public void write(OutputStream out, Message value) throws IOException {
+
       byte[] message = COMPRESSION.compress(value);
       Serializers.BYTES.write(out, message);
+
     }
 
     /**
@@ -77,8 +80,10 @@ public final class Message {
     */
     @Override
     public Message read(InputStream in) throws IOException {
+
       byte[] message = Serializers.BYTES.read(in);
       return COMPRESSION.decompress(message);
+
     }
   };
 
@@ -108,7 +113,7 @@ public final class Message {
     //Only check the next field of Uuids, because this performs a deep check and
     //we assume cur and prev are linked
     return a.content.equals(b.content) && a.creation.compareTo(b.creation) == 0
-    && Uuids.equals(a.author, b.author) && Uuids.equals(a.next, b.next);
+    && Uuid.equals(a.author, b.author) && Uuid.equals(a.next, b.next);
   }
 
 
@@ -117,11 +122,11 @@ public final class Message {
   */
   public static void toStream(OutputStream out, Message value) throws IOException {
 
-    Uuids.SERIALIZER.write(out, value.id);
-    Uuids.SERIALIZER.write(out, value.next);
-    Uuids.SERIALIZER.write(out, value.previous);
+    Uuid.SERIALIZER.write(out, value.id);
+    Uuid.SERIALIZER.write(out, value.next);
+    Uuid.SERIALIZER.write(out, value.previous);
     Time.SERIALIZER.write(out, value.creation);
-    Uuids.SERIALIZER.write(out, value.author);
+    Uuid.SERIALIZER.write(out, value.author);
     Serializers.STRING.write(out, value.content);
 
   }
@@ -132,11 +137,11 @@ public final class Message {
   public static Message fromStream(InputStream in) throws IOException {
 
     return new Message(
-        Uuids.SERIALIZER.read(in),
-        Uuids.SERIALIZER.read(in),
-        Uuids.SERIALIZER.read(in),
+        Uuid.SERIALIZER.read(in),
+        Uuid.SERIALIZER.read(in),
+        Uuid.SERIALIZER.read(in),
         Time.SERIALIZER.read(in),
-        Uuids.SERIALIZER.read(in),
+        Uuid.SERIALIZER.read(in),
         Serializers.STRING.read(in)
     );
   }

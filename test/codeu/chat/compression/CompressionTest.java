@@ -11,9 +11,8 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import codeu.chat.common.Time;
-import codeu.chat.common.Uuid;
-import codeu.chat.common.Uuids;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 import codeu.chat.common.Message;
 
 public final class CompressionTest{
@@ -27,11 +26,9 @@ public final class CompressionTest{
 		// Create chained Uuid's and Time in order to create a realistic message
 		final String authString = "50";
 		final String ids = "100.200.300";
-		// FIX: Time.now() no longer working
-		// final Time time = Time.now();
-		final Time time = Time.fromMs(12223456);
-		Uuid author = Uuids.fromString(authString);
-		Uuid next = Uuids.fromString(ids);
+		final Time time = Time.now();
+		Uuid author = Uuid.fromString(authString);
+		Uuid next = Uuid.fromString(ids);
 		Uuid id = next.root();
 		Uuid prev = id.root();
 		testMsg = new Message(id, next, prev, time, author, "I am a test message!\naAbB319@*!^&[]{}~ ZCXv");
