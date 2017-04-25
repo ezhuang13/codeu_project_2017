@@ -30,38 +30,6 @@ import codeu.chat.util.Time;
 
 public final class Message {
 
-  public static final Compression<Message> COMPRESSION = new Compression<Message>(){
-
-    @Override
-    public byte[] compress(Message data){
-        ByteArrayOutputStream msgStream = new ByteArrayOutputStream();
-        try{
-            Message.toStream(msgStream, data);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        byte[] byteMsg = msgStream.toByteArray();
-
-        return Compressions.BYTES.compress(byteMsg);
-    }
-
-    @Override
-    public Message decompress(byte[] data) {
-
-        data = Compressions.BYTES.decompress(data);
-
-        ByteArrayInputStream byteMsg = new ByteArrayInputStream(data);
-        //Must create a filler message in order to satisfy compiler
-        Message msg = new Message(Uuid.NULL, Uuid.NULL, Uuid.NULL, Time.now(), Uuid.NULL, "");
-        try {
-            msg = Message.fromStream(byteMsg);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return msg;
-    }
-  };
-
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
     /**
@@ -70,7 +38,7 @@ public final class Message {
     @Override
     public void write(OutputStream out, Message value) throws IOException {
 
-      byte[] message = COMPRESSION.compress(value);
+      byte[] message = Compressions.MESSAGE.compress(value);
       Serializers.BYTES.write(out, message);
 
     }
@@ -82,7 +50,7 @@ public final class Message {
     public Message read(InputStream in) throws IOException {
 
       byte[] message = Serializers.BYTES.read(in);
-      return COMPRESSION.decompress(message);
+      return Compressions.MESSAGE.decompress(message);
 
     }
   };
@@ -118,7 +86,7 @@ public final class Message {
 
 
   /**
-  * @brief Formerly the overriden Serializer write
+  * @brief Formerly the overridden Serializer write
   */
   public static void toStream(OutputStream out, Message value) throws IOException {
 
@@ -128,11 +96,10 @@ public final class Message {
     Time.SERIALIZER.write(out, value.creation);
     Uuid.SERIALIZER.write(out, value.author);
     Serializers.STRING.write(out, value.content);
-
   }
 
   /**
-  * @brief Formerly the overriden Serializer read
+  * @brief Formerly the overridden Serializer read
   */
   public static Message fromStream(InputStream in) throws IOException {
 
