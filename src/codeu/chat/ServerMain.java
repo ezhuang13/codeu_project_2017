@@ -15,7 +15,10 @@
 
 package codeu.chat;
 
+import java.io.File;
 import java.io.IOException;
+
+import java.lang.SecurityException;
 
 import codeu.chat.common.Relay;
 import codeu.chat.common.Secret;
@@ -55,6 +58,17 @@ final class ServerMain {
     // This is the directory where it is safe to store data accross runs
     // of the server.
     final String persistentPath = args[3];
+
+	  // Make sure the persistent directory exists.
+	  File persistentDirectory = new File(persistentPath);
+	  if (!persistentDirectory.exists()) {
+	  	try {
+	  	  persistentDirectory.mkdir();
+	  	} catch (SecurityException ex) {
+        LOG.error(ex, "Failed to create persistent directory");
+        System.exit(1);
+      }
+	  }
 
     final RemoteAddress relayAddress = args.length > 4 ?
                                        RemoteAddress.parse(args[4]) :
