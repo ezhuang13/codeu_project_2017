@@ -24,6 +24,7 @@ import codeu.chat.common.Uuid;
 import codeu.chat.common.Uuids;
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
+import codeu.chat.util.encryption.SharedEncryptor;
 
 public final class Conversation {
 
@@ -71,6 +72,8 @@ public final class Conversation {
   public final Collection<Uuid> users = new HashSet<>();
   public Uuid firstMessage = Uuids.NULL;
   public Uuid lastMessage = Uuids.NULL;
+
+  public SharedEncryptor encryptor = new SharedEncryptor();
 
   public Conversation(Uuid id, Uuid owner, Time creation, String title) {
 

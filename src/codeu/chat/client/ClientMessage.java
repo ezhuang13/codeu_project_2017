@@ -100,7 +100,9 @@ public final class ClientMessage {
   public void addMessage(Uuid author, Uuid conversation, String body) {
     final boolean validInputs = isValidBody(body) && (author != null) && (conversation != null);
 
-    final Message message = (validInputs) ? controller.newMessage(author, conversation, body) : null;
+    String encryptedBody = conversationContext.getCurrentEncryptor().encrypt(body);
+
+    final Message message = (validInputs) ? controller.newMessage(author, conversation, encryptedBody) : null;
 
     if (message == null) {
       System.out.format("Error: message not created - %s.\n",
@@ -228,7 +230,7 @@ public final class ClientMessage {
   }
 
   // Print Message.  User context is used to map from author UUID to name.
-  public static void printMessage(Message m, ClientUser userContext) {
+  public void printMessage(Message m, ClientUser userContext) {
     if (m == null) {
       System.out.println("Null message.");
     } else {
@@ -236,13 +238,15 @@ public final class ClientMessage {
       // Display author name if available.  Otherwise display the author UUID.
       final String authorName = (userContext == null) ? null : userContext.getName(m.author);
 
+      String content = conversationContext.getCurrentEncryptor().decrypt(m.content);
+
       System.out.format(" Author: %s   Id: %s created: %s\n   Body: %s\n",
-          (authorName == null) ? m.author : authorName, m.id, m.creation, m.content);
+          (authorName == null) ? m.author : authorName, m.id, m.creation, content);
     }
   }
 
   // Print Message outside of user context.
-  public static void printMessage(Message m) {
+  public void printMessage(Message m) {
     printMessage(m, null);
   }
 }

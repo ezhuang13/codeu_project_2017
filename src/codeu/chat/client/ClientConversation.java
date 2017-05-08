@@ -23,6 +23,7 @@ import codeu.chat.common.ConversationSummary;
 import codeu.chat.common.Uuid;
 import codeu.chat.util.Logger;
 import codeu.chat.util.Method;
+import codeu.chat.util.encryption.SharedEncryptor;
 import codeu.chat.util.store.Store;
 
 public final class ClientConversation {
@@ -74,6 +75,10 @@ public final class ClientConversation {
 
   public ConversationSummary getCurrent() {
     return currentSummary;
+  }
+
+  public SharedEncryptor getCurrentEncryptor() {
+    return currentConversation.encryptor;
   }
 
   public Uuid getCurrentId() { return (currentSummary != null) ? currentSummary.id : null; }
