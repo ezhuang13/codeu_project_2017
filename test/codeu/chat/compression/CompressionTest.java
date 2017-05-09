@@ -30,108 +30,75 @@ public final class CompressionTest{
 
 	//Note: since we are likely doing away with Uuids, many of these tests will need to be changed
 	@Before
-	public void setupUuids(){
+	public void setup(){
 		final String authString = "50";
 		final String ids = "100.200.300.400.500.600.700.800";
 		author = Uuid.fromString(authString);
 		next = Uuid.fromString(ids);
 		id = next.root();
 		prev = id.root();
-	}
-
-	@Before
-	public void setupTestMessage(){
 		testMsg = new Message(id, next, prev, time, author, "I am a test message!\nPlease compress me!!!");
-	}
-
-	@Before
-	public void setupTestConvoSummary(){
 		testConvoSummary = new ConversationSummary(id, author, time, "This is the summary of a conversation between users foo and bar");
-	}
-
-	@Before
-	public void setupTestConvo(){
 		testConvo = new Conversation(id, author, time, "This is another conversation between users foo and bar. Additionally, users have been added to the hash map.");
 		testConvo.users.add(author);
 		testConvo.users.add(next);
-	}
-
-	//Question for ruiqi: what to do with tokens?
-	@Before
-	public void setupUser(){
 		testUser = new User(author, "Mr. Foooooo", time);
 	}
 
 	@Test
 	public void testMessageCompression(){
-		Message copy = Compressions.MESSAGE.decompress(Compressions.MESSAGE.compress(testMsg));
+		Message copy = Message.MESSAGE.decompress(Message.MESSAGE.compress(testMsg));
 		assertTrue(Message.equals(testMsg, copy));
 	}
 
 	@Test
-	public void testMessageReadWrite(){
-		try{
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-			Message.SERIALIZER.write(output, testMsg);
-			ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-			assertTrue(Message.equals(testMsg, Message.SERIALIZER.read(input)));
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+	public void testMessageReadWrite() throws IOException{
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+		Message.SERIALIZER.write(output, testMsg);
+		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+		assertTrue(Message.equals(testMsg, Message.SERIALIZER.read(input)));
 	}
 
 	@Test
 	public void testConvoSummaryCompression(){
-		ConversationSummary copy = Compressions.CONVERSATION_SUMMARY.decompress(Compressions.CONVERSATION_SUMMARY.compress(testConvoSummary));
+		ConversationSummary copy = ConversationSummary.CONVERSATION_SUMMARY.decompress(ConversationSummary.CONVERSATION_SUMMARY.compress(testConvoSummary));
 		assertTrue(ConversationSummary.equals(testConvoSummary, copy));
 	}
 
 	@Test
-	public void testConvoSummaryReadWrite(){
-		try{
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-			ConversationSummary.SERIALIZER.write(output, testConvoSummary);
-			ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-			assertTrue(ConversationSummary.equals(testConvoSummary, ConversationSummary.SERIALIZER.read(input)));
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+	public void testConvoSummaryReadWrite() throws IOException{
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+		ConversationSummary.SERIALIZER.write(output, testConvoSummary);
+		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+		assertTrue(ConversationSummary.equals(testConvoSummary, ConversationSummary.SERIALIZER.read(input)));
 	}
 
 	@Test
 	public void testConvoCompression(){
-		Conversation copy = Compressions.CONVERSATION.decompress(Compressions.CONVERSATION.compress(testConvo));
+		Conversation copy = Conversation.CONVERSATION.decompress(Conversation.CONVERSATION.compress(testConvo));
 		assertTrue(Conversation.equals(testConvo, copy));
 	}
 
 	@Test
-	public void testConvoReadWrite(){
-		try{
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-			Conversation.SERIALIZER.write(output, testConvo);
-			ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-			assertTrue(Conversation.equals(testConvo, Conversation.SERIALIZER.read(input)));
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+	public void testConvoReadWrite() throws IOException{
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+		Conversation.SERIALIZER.write(output, testConvo);
+		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+		assertTrue(Conversation.equals(testConvo, Conversation.SERIALIZER.read(input)));
 	}
 
 	@Test
 	public void testUserCompression(){
-		User copy = Compressions.USER.decompress(Compressions.USER.compress(testUser));
+		User copy = User.USER.decompress(User.USER.compress(testUser));
 		assertTrue(User.equals(testUser, copy));
 	}
 
 	@Test
-	public void testUserReadWrite(){
-		try{
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-			User.SERIALIZER.write(output, testUser);
-			ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-			assertTrue(User.equals(testUser, User.SERIALIZER.read(input)));
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+	public void testUserReadWrite() throws IOException{
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+		User.SERIALIZER.write(output, testUser);
+		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+		assertTrue(User.equals(testUser, User.SERIALIZER.read(input)));
 	}
 	
 }
