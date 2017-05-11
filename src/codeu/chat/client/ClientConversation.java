@@ -43,7 +43,7 @@ public final class ClientConversation {
 
   // This is the set of conversations known to the server, sorted by title.
   private Store<String, ConversationSummary> summariesSortedByTitle =
-      new Store<>(String.CASE_INSENSITIVE_ORDER);
+          new Store<>(String.CASE_INSENSITIVE_ORDER);
 
   public ClientConversation(Controller controller, View view, ClientUser userContext) {
     this.controller = controller;
@@ -93,7 +93,7 @@ public final class ClientConversation {
 
     if (conv == null) {
       System.out.format("Error: conversation not created - %s.\n",
-          (validInputs) ? "server failure" : "bad input value");
+              (validInputs) ? "server failure" : "bad input value");
     } else {
       LOG.info("New conversation: Title= \"%s\" UUID= %s", conv.title, conv.id);
 
@@ -136,17 +136,17 @@ public final class ClientConversation {
       currentConversation = getConversation(currentSummary.id);
       if (currentConversation == null) {
         LOG.info("GetConversation: current=%s, current.id=%s, but currentConversation == null",
-            currentSummary, currentSummary.id);
+                currentSummary, currentSummary.id);
       } else {
         LOG.info("Get Conversation: Title=\"%s\" UUID=%s first=%s last=%s\n",
-            currentConversation.title, currentConversation.id, currentConversation.firstMessage,
-            currentConversation.lastMessage);
+                currentConversation.title, currentConversation.id, currentConversation.firstMessage,
+                currentConversation.lastMessage);
       }
     }
   }
 
   public int conversationsCount() {
-   return summariesByUuid.size();
+    return summariesByUuid.size();
   }
 
   public Iterable<ConversationSummary> getConversationSummaries() {

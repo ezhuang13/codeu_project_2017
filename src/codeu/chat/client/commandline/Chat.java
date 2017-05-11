@@ -89,7 +89,7 @@ public final class Chat {
       if (!tokenScanner.hasNext()) {
         System.out.println("ERROR: No user name supplied.");
       } else {
-        signInUser(tokenScanner.nextLine().trim(), tokenScanner.nextLine().trim());
+        signInUser(tokenScanner.next().trim(), tokenScanner.next().trim());
       }
 
     } else if (token.equals("sign-out")) {
@@ -109,7 +109,7 @@ public final class Chat {
       if (!tokenScanner.hasNext()) {
         System.out.println("ERROR: Username not supplied.");
       } else {
-        addUser(tokenScanner.nextLine().trim(), tokenScanner.nextLine().trim());
+        addUser(tokenScanner.next().trim(), tokenScanner.next().trim());
       }
 
     } else if (token.equals("u-list-all")) {
