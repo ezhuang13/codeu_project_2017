@@ -4,13 +4,14 @@ import codeu.chat.database.Database;
 import codeu.chat.database.Schema;
 
 /**
-* @description Schema for conversations
+* @description Schema for messages
 */
-public class ConversationSchema extends Schema{
+public class MessageSchema extends Schema{
 
-	public ConversationSchema(){
+	public MessageSchema(){
 		addField("user_id", "INT");
+		addField("conversation_id", "INT");
 		addField("time_created", "TEXT(255)");
-		addField("title", "TEXT(255)");
+		addField("content", "TEXT(255)");
 	}
 }
