@@ -17,7 +17,6 @@ class ConversationData implements Comparable<ConversationData>{
 	public ConversationData(String title, Time creation, ArrayList<MessageData> messages){
 		this.title = title;
 		this.creation = creation;
-		Collections.sort(messages);
 		this.messages = messages;
 	}
 

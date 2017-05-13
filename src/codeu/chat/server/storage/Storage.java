@@ -54,18 +54,19 @@ public final class Storage{
 
 	/*
 	* @brief Adds a conversation to the database
-	* @param uid The owner of the conversation
-	* @param time The time of creation
+	* @param username The username of the owner of the conversation
+	* @param time The time of creation in ms
 	* @param title The title of the conversation
+	* @return The id of the added conversation
 	*/
-	public int addConversation(String uid, long time, String title){
+	public int addConversation(String username, long time, String title){
 		try{
 			Map<String, String> fields = new HashMap<String, String>();
-			fields.put("username", uid);
+			fields.put("username", username);
 			fields.put("time_created", Long.toString(time));
 			fields.put("title", title);
-			conversationTable.create(fields);
-			return 0;
+			//return the id field of the added conversation
+			return conversationTable.create(fields);
 		}
 		catch(SQLException e){
 			LOG.error(e, "Failed to add conversation");
@@ -76,7 +77,7 @@ public final class Storage{
 	/*
 	* @brief Adds a message to the database
 	* @param cid The conversation the message belongs in
-	* @param time The time of creation
+	* @param time The time of creation in ms
 	* @param content The contents of the message
 	*/
 	public int addMessage(int cid, long time, String content){
@@ -95,12 +96,10 @@ public final class Storage{
 	}
 
 	/*
-	* @brief Loads all messages associated with a user into the database
-	* @param cid The conversation the message belongs in
-	* @param time The time of creation
-	* @param content The contents of the message
+	* @brief Loads all conversations stored in the database that are associated with the user
+	* @param username The username whose conversations will be returned
 	* @return An ArrayList of conversation data, where each conversation also has its
-	* message data
+	* message data. Both are sorted in ascending order by time of creation
 	*/
 	public ArrayList<ConversationData> loadConversations(String username){
 		ArrayList<ConversationData> conversationData = new ArrayList<ConversationData>();
@@ -113,9 +112,10 @@ public final class Storage{
 			//Iterates through conversation DBObjects and extracts data
 			for (DBObject<ConversationSchema> c: conversationList){
 				String title = c.get("title");
+				//-----------This line might not work------------------------
 				Time time = Time.fromMs(Long.parseLong(c.get("time_created")));
 				ArrayList<MessageData> messages = new ArrayList<MessageData>();
-				int cid = Integer.parseInt(c.get("_id"));
+				String cid = c.get("_id");
 				messages = loadMessages(cid);
 				ConversationData convo = new ConversationData(title, time, messages);
 				conversationData.add(convo);
@@ -130,8 +130,35 @@ public final class Storage{
 		return conversationData;
 	}
 
-	private ArrayList<MessageData> loadMessages(int cid){
+	/*
+	* @brief Loads all messages stored in the database that are associated with the conversation
+	* @param cid The conversation whose messages will be returned
+	* @return An ArrayList of message data associated with the given conversation,
+	* sorted in ascending order by time of creation
+	*/
+	private ArrayList<MessageData> loadMessages(String cid){
 		ArrayList<MessageData> messageData = new ArrayList<MessageData>();
+
+		try{
+			//Compiles all messages that match the given conversation id
+			List<DBObject<MessageSchema>> messageList = new ArrayList<DBObject<MessageSchema>>();
+			messageList = messageTable.find("_id", cid);
+
+			//Iterates through message DBObjects and extracts data
+			for (DBObject<MessageSchema> m: messageList){
+				String content = m.get("content");
+				//-----------Same goes for here------------------------
+				Time time = Time.fromMs(Long.parseLong(m.get("time_created")));
+				MessageData message = new MessageData(content, time);
+				messageData.add(message);
+			}
+		}
+		catch(SQLException e){
+			LOG.error(e, "Failed to lost past message of user");
+		}
+
+		//Sort the messages by Time in ascending order
+		Collections.sort(messageData);
 		return messageData;
 	}
 }
