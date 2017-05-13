@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 import codeu.chat.common.Conversation;
 import codeu.chat.common.Message;
@@ -18,6 +19,9 @@ import codeu.chat.server.database.ConversationTable;
 import codeu.chat.server.database.ConversationSchema;
 import codeu.chat.server.database.MessageTable;
 import codeu.chat.server.database.MessageSchema;
+
+import codeu.chat.server.storage.ConversationData;
+import codeu.chat.server.storage.MessageData;
 
 /*
 * @description Manager for conversation and message storage
@@ -95,6 +99,8 @@ public final class Storage{
 	* @param cid The conversation the message belongs in
 	* @param time The time of creation
 	* @param content The contents of the message
+	* @return An ArrayList of conversation data, where each conversation also has its
+	* message data
 	*/
 	public ArrayList<ConversationData> loadConversations(String username){
 		ArrayList<ConversationData> conversationData = new ArrayList<ConversationData>();
@@ -108,39 +114,24 @@ public final class Storage{
 			for (DBObject<ConversationSchema> c: conversationList){
 				String title = c.get("title");
 				Time time = Time.fromMs(Long.parseLong(c.get("time_created")));
-				ConversationData convo = new ConversationData(title, time);
+				ArrayList<MessageData> messages = new ArrayList<MessageData>();
+				int cid = Integer.parseInt(c.get("_id"));
+				messages = loadMessages(cid);
+				ConversationData convo = new ConversationData(title, time, messages);
 				conversationData.add(convo);
 			}
 		}
 		catch(SQLException e){
 			LOG.error(e, "Failed to load past conversations of user");
 		}
+		
+		//Sort the conversations by Time in ascending order
+		Collections.sort(conversationData);
 		return conversationData;
 	}
 
-	public ArrayList<MessageData> loadMessages(){
+	private ArrayList<MessageData> loadMessages(int cid){
 		ArrayList<MessageData> messageData = new ArrayList<MessageData>();
 		return messageData;
 	}
-
-}
-
-/*
-* @description metadata for a conversation
-*/
-class ConversationData{
-	public String title;
-	public Time creation;
-
-	public ConversationData(String title, Time creation){
-		this.title = title;
-		this.creation = creation;
-	}
-}
-
-/*
-* @description metadata for a message
-*/
-class MessageData{
-
 }
