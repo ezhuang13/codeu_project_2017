@@ -42,6 +42,7 @@ import codeu.chat.util.Uuid;
 import codeu.chat.util.connections.Connection;
 
 import codeu.chat.server.authentication.Authentication;
+import codeu.chat.server.storage.Storage;
 
 public final class Server {
 
@@ -65,6 +66,8 @@ public final class Server {
 
   private final Authentication authentication;
 
+  private final Storage storage;
+
   public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database) {
 
     this.id = id;
@@ -73,8 +76,10 @@ public final class Server {
     // Set up the authentication manager.
     this.database = database;
     this.authentication = new Authentication(database);
+    //Set up storage manager
+    this.storage = new Storage(database);
 
-    this.controller = new Controller(id, model, authentication);
+    this.controller = new Controller(id, model, authentication, storage);
     this.relay = relay;
 
     // Server initialization finished.

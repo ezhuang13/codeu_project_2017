@@ -9,7 +9,7 @@ import codeu.chat.database.Schema;
 public class ConversationSchema extends Schema{
 
 	public ConversationSchema(){
-		addField("user_id", "INT");
+		addField("username", "TEXT(255)");
 		addField("time_created", "TEXT(255)");
 		addField("title", "TEXT(255)");
 	}

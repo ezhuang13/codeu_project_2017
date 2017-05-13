@@ -31,6 +31,7 @@ import codeu.chat.database.Database;
 import codeu.chat.server.database.UserSchema;
 import codeu.chat.server.authentication.Authentication;
 import codeu.chat.authentication.AuthenticationCode;
+import codeu.chat.server.storage.Storage;
 
 public final class RawControllerTest {
 
@@ -44,6 +45,7 @@ public final class RawControllerTest {
   private Database database;
   private UserSchema userSchema;
   private Authentication authentication;
+  private Storage storage;
 
   private User user;
 
@@ -54,9 +56,10 @@ public final class RawControllerTest {
     userSchema = new UserSchema();
     userSchema.dropTable("users", database);
     authentication = new Authentication(database);
+    storage = new Storage(database);
 
     model = new Model();
-    controller = new Controller(Uuid.NULL, model, authentication);
+    controller = new Controller(Uuid.NULL, model, authentication, storage);
 
     userId = new Uuid(1);
     conversationId = new Uuid(2);

@@ -26,6 +26,7 @@ import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.server.authentication.Authentication;
 import codeu.chat.authentication.AuthenticationCode;
+import codeu.chat.server.storage.Storage;
 
 public final class Controller implements RawController, BasicController {
 
@@ -35,11 +36,13 @@ public final class Controller implements RawController, BasicController {
   private final Uuid.Generator uuidGenerator;
 
   private final Authentication authentication;
+  private final Storage storage;
 
-  public Controller(Uuid serverId, Model model, Authentication authentication) {
+  public Controller(Uuid serverId, Model model, Authentication authentication, Storage storage) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
     this.authentication = authentication;
+    this.storage = storage;
   }
 
   @Override
@@ -151,6 +154,12 @@ public final class Controller implements RawController, BasicController {
           creationTime,
           result);
     }
+
+      //------------Load conversations and messages for user------------------
+    //user.token is the token to call new conversation and whatnot
+
+
+
 
     return user;
   }
