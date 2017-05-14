@@ -5,71 +5,83 @@
 
 package codeu.chat.util;
 
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.util.zip.DataFormatException;  
-import java.util.zip.Deflater;  
-import java.util.zip.Inflater;
+import javax.crypto.*;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-public final class Compressions{
+// Specialized only for byte sequences.
+public final class Encryptions {
+	private static final String SYMMETRIC_ALGORITHM = "AES";
 
-	public static final Compression<byte[]> BYTES = new Compression<byte[]>(){
-
-		/**
-     	* @param data The bytes that are to be compressed
-     	* @return A smaller byte array that can be decompressed back into itself
-     	*/
-		@Override
-		public byte[] compress (byte[] data){
-
-	        Deflater deflater = new Deflater();
-	        deflater.setInput(data);
-
-	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-
-	        //Is this needed?
-	        deflater.finish();
-
-	        byte[] buffer = new byte[100];
-	        while (!deflater.finished()) {  
-	            int count = deflater.deflate(buffer);
-	            outputStream.write(buffer, 0, count);   
-	        }
-	        byte[] output = outputStream.toByteArray();
-
-	        deflater.end();
-
-	        return output;  
-
+	public static byte[] wrap(SecretKey keyToWrap, PublicKey publicKey) {
+		try {
+			Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+			cipher.init(Cipher.WRAP_MODE, publicKey);
+			return cipher.wrap(keyToWrap);
 		}
-    	/**
-     	* @param data The bytes that are to be decompressed
-     	* @return A larger byte array that represents the original data
-    	 */
-		@Override
-		public byte[] decompress(byte[] data){
+		catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+		catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+		catch (GeneralSecurityException gse) {}
 
-	        Inflater inflater = new Inflater();
-	        inflater.setInput(data);
+		System.out.println(" on wrapping.");
+		return null;
+	}
 
-	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);  
-	        byte[] buffer = new byte[1024];  
-	        while (!inflater.finished()) {
-	            int count = 0;
-	            try{
-	                count = inflater.inflate(buffer);
-	            }
-	            catch (DataFormatException e){
-	                e.printStackTrace();
-	            } 
-	            outputStream.write(buffer, 0, count);  
-	        }
-	        byte[] output = outputStream.toByteArray();
+	public static SecretKey unwrap(byte[] keyToUnwrap, PrivateKey privateKey) {
+		try {
+			Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+			cipher.init(Cipher.UNWRAP_MODE, privateKey);
+			return (SecretKey) cipher.unwrap(keyToUnwrap, SYMMETRIC_ALGORITHM, Cipher.SECRET_KEY);
+		}
+		catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+		catch (NoSuchPaddingException nspe) {System.out.print("NO SUCH PADDING");}
+		catch (GeneralSecurityException gse) {}
 
-	        inflater.end();
+		System.out.println(" on unwrapping.");
+		return null;
+	}
 
-        	return output;
-        }
-    };
+	/**
+	 * encrypt
+	 * Takes in a byte array and encrypts it into an encrypted byte array.
+	 * @param input byte array to encrypt
+	 * @return encrypted byte array
+	 */
+	public static byte[] encrypt(byte[] input, SecretKey key) {
+		try {
+			Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+			return cipher.doFinal(input);
+		}
+		catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+		catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+		catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
+		catch (GeneralSecurityException gse) {}
+
+		System.out.println(" on decryption.");
+		return null;
+	}
+
+	/**
+	 * decrypt
+	 * Decrypts a previously encrypted byte array.
+	 * @param input encrypted byte array
+	 * @return the plaintext yielded from the byte array
+	 */
+	public static byte[] decrypt(byte[] input, SecretKey key) {
+		try {
+			Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+			cipher.init(Cipher.DECRYPT_MODE, key);
+			return cipher.doFinal(input);
+		}
+		catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+		catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+		catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
+		catch (GeneralSecurityException gse) {}
+
+		System.out.println(" on decryption.");
+		return null;
+	}
 }

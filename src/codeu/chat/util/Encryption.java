@@ -5,19 +5,18 @@
 
 package codeu.chat.util;
 
-public interface Compression<T>{
+public interface Encryption<T>{
 
     /**
-     * @param data The object to be compressed
-     * @return A byte array representation of the parameter oobject
+     * @param data The byte array to encrypt
+     * @return An encrypted byte array
      */
-	byte[] compress(T data);
+	byte[] encrypt(T data);
 
     /**
-     * @pre data must be a compressed version of type T
-     * @param data The entry to be decompressed
-     * @return An object that represents the compressed packet passed in
+     * @param data The byte array to decrypt
+     * @return The decrypted byte array
      */
-	T decompress(byte[] data);
+	T decrypt(byte[] data);
 
 }
