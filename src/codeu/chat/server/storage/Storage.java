@@ -117,7 +117,7 @@ public final class Storage{
 				ArrayList<MessageData> messages = new ArrayList<MessageData>();
 				String cid = c.get("_id");
 				messages = loadMessages(cid);
-				ConversationData convo = new ConversationData(title, time, messages);
+				ConversationData convo = new ConversationData(title, time, Integer.parseInt(cid), messages);
 				conversationData.add(convo);
 			}
 		}

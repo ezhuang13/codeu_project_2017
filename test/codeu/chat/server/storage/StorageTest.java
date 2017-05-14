@@ -44,7 +44,7 @@ public final class StorageTest{
 				MessageData m = new MessageData(messageContent, messageTime);
 				messages.add(m);
 			}
-			ConversationData c = new ConversationData(convoTitle, convoTime, messages);
+			ConversationData c = new ConversationData(convoTitle, convoTime, cid, messages);
 			conversations.add(c);
 		}
 	}

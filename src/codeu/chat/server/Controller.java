@@ -180,6 +180,7 @@ public final class Controller implements RawController, BasicController {
     for (ConversationData c: conversations){
       Uuid convoId = createId();
       Conversation currentConvo = newConversation(convoId, c.getTitle(), id, c.getCreation());
+      conversationIds.put(convoId, c.getId());
       if (currentConvo != null){
         for (MessageData m: c.getMessages()){
           Message currentMessage = newMessage(createId(), id, convoId, m.getContent(), m.getCreation());

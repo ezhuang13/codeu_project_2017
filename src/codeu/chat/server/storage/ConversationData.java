@@ -12,11 +12,13 @@ import codeu.chat.server.storage.MessageData;
 public final class ConversationData implements Comparable<ConversationData>{
 	private String title;
 	private Time creation;
+	private int id;
 	private ArrayList<MessageData> messages;
 	
-	public ConversationData(String title, Time creation, ArrayList<MessageData> messages){
+	public ConversationData(String title, Time creation, int id, ArrayList<MessageData> messages){
 		this.title = title;
 		this.creation = creation;
+		this.id = id;
 		this.messages = messages;
 	}
 
@@ -26,6 +28,10 @@ public final class ConversationData implements Comparable<ConversationData>{
 
 	public Time getCreation(){
 		return creation;
+	}
+
+	public int getId(){
+		return id;
 	}
 
 	public ArrayList<MessageData> getMessages(){
