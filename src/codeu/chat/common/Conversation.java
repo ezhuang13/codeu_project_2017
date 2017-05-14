@@ -100,14 +100,9 @@ public final class Conversation {
     this.owner = owner;
     this.creation = creation;
     this.title = title;
-    this.dbID = 0; //set to 0 as default for consistency
 
     this.summary = new ConversationSummary(id, owner, creation, title);
 
-  }
-
-  public void setDbId(int id){
-    this.dbID = id;
   }
 
   /**
@@ -116,7 +111,7 @@ public final class Conversation {
   */
   public static boolean equals(Conversation a, Conversation b){
     //Checking the conversation summary for equality checks all other fields
-    return a.dbID == b.dbID && a.users.equals(b.users) && ConversationSummary.equals(a.summary, b.summary);
+    return a.users.equals(b.users) && ConversationSummary.equals(a.summary, b.summary);
   }
 
   /**

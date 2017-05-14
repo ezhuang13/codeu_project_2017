@@ -149,8 +149,6 @@ public final class Server {
 
       final Message message = controller.newMessage(author, token, conversation, content);
 
-      //Should encryption/compression occur here? When writing after creation of message?
-
       Serializers.INTEGER.write(out, NetworkCode.NEW_MESSAGE_RESPONSE);
       Serializers.nullable(Message.SERIALIZER).write(out, message);
 
@@ -160,6 +158,8 @@ public final class Server {
           message.id));
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
+
+      //might have to also write conversations back out to the client
 
       final String username = Serializers.STRING.read(in);
       final String password = Serializers.STRING.read(in);

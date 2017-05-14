@@ -52,6 +52,8 @@ public final class Storage{
 		}
 	}
 
+//make sure username and cid are not null
+
 	/*
 	* @brief Adds a conversation to the database
 	* @param username The username of the owner of the conversation
@@ -70,7 +72,7 @@ public final class Storage{
 		}
 		catch(SQLException e){
 			LOG.error(e, "Failed to add conversation");
-			return 1;
+			return -1;
 		}
 	}
 
@@ -80,18 +82,16 @@ public final class Storage{
 	* @param time The time of creation in ms
 	* @param content The contents of the message
 	*/
-	public int addMessage(int cid, long time, String content){
+	public void addMessage(int cid, long time, String content){
 		try{
 			Map<String, String> fields = new HashMap<String, String>();
 			fields.put("conversation_id", Integer.toString(cid));
 			fields.put("time_created", Long.toString(time));
 			fields.put("content", content);
 			messageTable.create(fields);
-			return 0;
 		}
 		catch(SQLException e){
 			LOG.error(e, "Failed to add message");
-			return 1;
 		}
 	}
 

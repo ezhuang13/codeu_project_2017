@@ -9,7 +9,7 @@ import codeu.chat.server.storage.MessageData;
 * @description Data for a conversation with methods to
 * expose fields and allow comparisons for sorting
 */
-class ConversationData implements Comparable<ConversationData>{
+public final class ConversationData implements Comparable<ConversationData>{
 	private String title;
 	private Time creation;
 	private ArrayList<MessageData> messages;
