@@ -57,12 +57,9 @@ public final class Controller implements RawController, BasicController {
   public Message newMessage(Uuid author, Uuid token, Uuid conversation, String body) {
     if (!checkToken(author, token)) return null;
     Time creationTime = Time.now();
-    LOG.info(Integer.toString(conversation.id()));
     storage.addMessage(conversationIds.get(conversation), creationTime.inMs(), body);
     return newMessage(createId(), author, conversation, body, creationTime);
   }
-  
-  //-457967567
 
   @Override
   public int newUser(String username, String password) {
