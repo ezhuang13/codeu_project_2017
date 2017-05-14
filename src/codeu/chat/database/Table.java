@@ -100,6 +100,7 @@ public abstract class Table<S extends Schema> {
           for (String field : schema.getFields().keySet()) {
             fields.put(field, results.getString(field));
           }
+          fields.put("_id", results.getString("_id"));
 
           // Create a DBObject with the field values.
           DBObject<S> object = new DBObject<S>(this, id, fields);
