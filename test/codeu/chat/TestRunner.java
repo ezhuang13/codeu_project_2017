@@ -32,7 +32,7 @@ public final class TestRunner {
              codeu.chat.util.TimeTest.class,
              codeu.chat.util.UuidTest.class,
              codeu.chat.server.authentication.AuthenticationTest.class,
-             codeu.chat.server.storage.ConversationTest.class
+             codeu.chat.server.storage.StorageTest.class
          );
       for (final Failure failure : result.getFailures()) {
          System.out.println(failure.toString());

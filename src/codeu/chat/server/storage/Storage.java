@@ -32,8 +32,9 @@ public final class Storage{
 
 	private final Database database;
 
-	private ConversationTable conversationTable;
-	private MessageTable messageTable;
+	//public for sake of testing
+	public ConversationTable conversationTable;
+	public MessageTable messageTable;
 
 	/*
 	* @brief Creates the storage manager
@@ -52,8 +53,6 @@ public final class Storage{
 		}
 	}
 
-//make sure username and cid are not null
-
 	/*
 	* @brief Adds a conversation to the database
 	* @param username The username of the owner of the conversation
@@ -68,6 +67,7 @@ public final class Storage{
 			fields.put("time_created", Long.toString(time));
 			fields.put("title", title);
 			//return the id field of the added conversation
+			LOG.info("Conversation added");
 			return conversationTable.create(fields);
 		}
 		catch(SQLException e){
@@ -89,6 +89,7 @@ public final class Storage{
 			fields.put("time_created", Long.toString(time));
 			fields.put("content", content);
 			messageTable.create(fields);
+			LOG.info("Messsage added");
 		}
 		catch(SQLException e){
 			LOG.error(e, "Failed to add message");
@@ -112,7 +113,6 @@ public final class Storage{
 			//Iterates through conversation DBObjects and extracts data
 			for (DBObject<ConversationSchema> c: conversationList){
 				String title = c.get("title");
-				//-----------This line might not work------------------------
 				Time time = Time.fromMs(Long.parseLong(c.get("time_created")));
 				ArrayList<MessageData> messages = new ArrayList<MessageData>();
 				String cid = c.get("_id");
@@ -147,7 +147,6 @@ public final class Storage{
 			//Iterates through message DBObjects and extracts data
 			for (DBObject<MessageSchema> m: messageList){
 				String content = m.get("content");
-				//-----------Same goes for here------------------------
 				Time time = Time.fromMs(Long.parseLong(m.get("time_created")));
 				MessageData message = new MessageData(content, time);
 				messageData.add(message);
