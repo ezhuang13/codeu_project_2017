@@ -43,4 +43,20 @@ public final class ConversationData implements Comparable<ConversationData>{
 		Long compareTime = compareConvo.getCreation().inMs();
 		return myTime.compareTo(compareTime);
 	}
+
+	/*
+	* @description Checks for deep equality, for testing
+	*/
+	public boolean isEqual(ConversationData compareConvo){
+		if (messages.size() == compareConvo.getMessages().size()){
+			for (int i = 0; i < messages.size(); ++i){
+				if (!messages.get(i).isEqual(compareConvo.getMessages().get(i))){
+					return false;
+				}
+			}
+			return title.equals(compareConvo.getTitle()) && id == compareConvo.getId() &&
+					creation.compareTo(compareConvo.getCreation()) == 0;
+		}
+		else return false;
+	}
 }

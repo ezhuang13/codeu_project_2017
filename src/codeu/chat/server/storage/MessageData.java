@@ -29,4 +29,11 @@ public final class MessageData implements Comparable<MessageData>{
 		Long compareTime = compareMessage.getCreation().inMs();
 		return myTime.compareTo(compareTime);
 	}
+
+	/*
+	* @description Checks for deep equality, for testing
+	*/
+	public boolean isEqual(MessageData compareMessage){
+		return creation.compareTo(compareMessage.getCreation()) == 0 && content.equals(compareMessage.getContent());
+	}
 }
