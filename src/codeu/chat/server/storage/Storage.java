@@ -142,7 +142,7 @@ public final class Storage{
 		try{
 			//Compiles all messages that match the given conversation id
 			List<DBObject<MessageSchema>> messageList = new ArrayList<DBObject<MessageSchema>>();
-			messageList = messageTable.find("_id", cid);
+			messageList = messageTable.find("conversation_id", cid);
 
 			//Iterates through message DBObjects and extracts data
 			for (DBObject<MessageSchema> m: messageList){
