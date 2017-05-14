@@ -14,6 +14,7 @@
 
 package codeu.chat.util;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,5 +24,9 @@ public interface Serializer<T> {
   void write(OutputStream out, T value) throws IOException;
 
   T read(InputStream in) throws IOException;
+
+  void write(OutputStream out, T value, SecretKey key) throws IOException;
+
+  T read(InputStream in, SecretKey key) throws IOException;
 
 }
