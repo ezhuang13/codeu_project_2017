@@ -85,6 +85,7 @@ public final class Conversation {
 
   public final ConversationSummary summary;
 
+  public int dbID;
   public final Uuid id;
   public final Uuid owner;
   public final Time creation;

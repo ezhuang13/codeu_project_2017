@@ -28,7 +28,6 @@ public final class CompressionTest{
 	private Conversation testConvo;
 	private User testUser;
 
-	//Note: since we are likely doing away with Uuids, many of these tests will need to be changed
 	@Before
 	public void setup(){
 		final String authString = "50";
