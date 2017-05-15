@@ -25,8 +25,4 @@ public interface Serializer<T> {
 
   T read(InputStream in) throws IOException;
 
-  void write(OutputStream out, T value, SecretKey key) throws IOException;
-
-  T read(InputStream in, SecretKey key) throws IOException;
-
 }

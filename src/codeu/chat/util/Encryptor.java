@@ -1,70 +1,103 @@
 /**
- * SharedEncryptor.java
- * Represents user security data to be attached to each account.
- * Uses AES encryption.
+ * Encryptor.java
+ * Provides various encryption-related methods.
  */
 
 package codeu.chat.util;
 
 import javax.crypto.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.*;
-import java.io.UnsupportedEncodingException;
 
 public class Encryptor {
     private static final String SYMMETRIC_ALGORITHM = "AES";
     private static final String ASYMMETRIC_ALGORITHM = "RSA";
-    private static final String _ENCODING = "ISO-8859-1";
 
-    /**
-     * Encryptor
-     * Initializes a key to prepare for encryption.
-     */
-    public Encryptor(boolean shared) {
+    public static SecretKey makeSymmetricKey() {
+        KeyGenerator keyMaker;
+
         try {
-            if (shared) {
-                KeyGenerator keyMaker = KeyGenerator.getInstance(SYMMETRIC_ALGORITHM);
-                keyMaker.init(128);
+            keyMaker = KeyGenerator.getInstance(SYMMETRIC_ALGORITHM);
+        } catch(NoSuchAlgorithmException nsae) {return null;}
 
-                SecretKey key = keyMaker.generateKey();
-            } else {
-                KeyPairGenerator keyMaker = KeyPairGenerator.getInstance(ASYMMETRIC_ALGORITHM);
-                keyMaker.initialize(2048);
+        keyMaker.init(128);
+        return keyMaker.generateKey();
+    }
 
-                KeyPair keypair = keyMaker.generateKeyPair();
-                PrivateKey privateKey = keypair.getPrivate();
-                PublicKey publicKey = keypair.getPublic();
-            }
+    public static KeyPair makeAsymmetricKeyPair() {
+        KeyPairGenerator keyMaker;
+
+        try {
+            keyMaker = KeyPairGenerator.getInstance(ASYMMETRIC_ALGORITHM);
+        } catch(NoSuchAlgorithmException nsae) {return null;}
+
+        keyMaker.initialize(2048);
+        return keyMaker.generateKeyPair();
+    }
+
+    public static byte[] wrap(SecretKey keyToWrap, PublicKey publicKey) {
+        try {
+            Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+            cipher.init(Cipher.WRAP_MODE, publicKey);
+            return cipher.wrap(keyToWrap);
         }
-        catch (NoSuchAlgorithmException nsae) {}
+        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+        catch (GeneralSecurityException gse) {}
+
+        System.out.println(" on wrapping.");
+        return null;
+    }
+
+    public static SecretKey unwrap(byte[] keyToUnwrap, PrivateKey privateKey) {
+        try {
+            Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+            cipher.init(Cipher.UNWRAP_MODE, privateKey);
+            return (SecretKey) cipher.unwrap(keyToUnwrap, SYMMETRIC_ALGORITHM, Cipher.SECRET_KEY);
+        }
+        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+        catch (NoSuchPaddingException nspe) {System.out.print("NO SUCH PADDING");}
+        catch (GeneralSecurityException gse) {}
+
+        System.out.println(" on unwrapping.");
+        return null;
+    }
+
+    public static void writeKey(OutputStream out, SecretKey key, PublicKey publicKey) throws IOException {
+        byte[] value = wrap(key, publicKey);
+        Serializers.INTEGER.write(out, value.length);
+        out.write(value);
+    }
+
+    public static SecretKey readKey(InputStream input, PrivateKey privateKey) throws IOException {
+        final int length = Serializers.INTEGER.read(input);
+        final byte[] value = new byte[length];
+
+        for (int i = 0; i < length; i++) {
+            value[i] = (byte) input.read();
+        }
+
+        return unwrap(value, privateKey);
     }
 
     /**
      * encrypt
      * Takes in a byte array and encrypts it into an encrypted byte array.
-     * Default version.
      * @param input byte array to encrypt
      * @return encrypted byte array
      */
-    public static byte[] encrypt(byte[] input, java.security.Key key) {
+    public static byte[] encrypt(byte[] input, SecretKey key) {
         try {
             Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(input);
         }
-        catch (InvalidKeyException iee) {System.out.print("\"INVALIDKEY\"");}
-        catch (IllegalBlockSizeException ibse) {System.out.print("\"ILLEGALBLOCKSIZE\"");}
-        catch (BadPaddingException bpe) {System.out.print("\"BADPADDING\"");}
+        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+        catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
         catch (GeneralSecurityException gse) {}
-
-        System.out.println(" on decryption.");
-        return null;
-    }
-
-    public static String encrypt(String input, java.security.Key key) {
-        try {
-            return new String(encrypt(input.getBytes(_ENCODING), key), _ENCODING);
-        }
-        catch (UnsupportedEncodingException uee) {System.out.print("\"UNSUPPORTEDENCODING\"");}
 
         System.out.println(" on decryption.");
         return null;
@@ -72,30 +105,20 @@ public class Encryptor {
 
     /**
      * decrypt
-     * Decrypts a previously encrypted byte array. Default version
+     * Decrypts a previously encrypted byte array.
      * @param input encrypted byte array
      * @return the plaintext yielded from the byte array
      */
-    public byte[] decrypt(byte[] input, java.security.Key key) {
+    public static byte[] decrypt(byte[] input, SecretKey key) {
         try {
             Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, key);
             return cipher.doFinal(input);
         }
-        catch (InvalidKeyException iee) {System.out.print("\"INVALIDKEY\"");}
-        catch (IllegalBlockSizeException ibse) {System.out.print("\"ILLEGALBLOCKSIZE\"");}
-        catch (BadPaddingException bpe) {System.out.print("\"BADPADDING\"");}
+        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
+        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
+        catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
         catch (GeneralSecurityException gse) {}
-
-        System.out.println(" on decryption.");
-        return null;
-    }
-
-    public String decrypt(String input, java.security.Key key) {
-        try {
-            return new String(decrypt(input.getBytes(_ENCODING), key), _ENCODING);
-        }
-        catch (UnsupportedEncodingException uee) {System.out.print("\"UNSUPPORTEDENCODING\"");}
 
         System.out.println(" on decryption.");
         return null;

@@ -20,8 +20,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import java.sql.SQLException;
@@ -34,11 +36,7 @@ import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
 import codeu.chat.common.User;
 import codeu.chat.database.Database;
-import codeu.chat.util.Logger;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Time;
-import codeu.chat.util.Timeline;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 import codeu.chat.util.connections.Connection;
 
 import codeu.chat.server.authentication.Authentication;
@@ -65,6 +63,10 @@ public final class Server {
 
   private final Authentication authentication;
 
+  private final String ASYMMETRIC_ALGORITHM = "RSA";
+  private PrivateKey privateKey = null;
+  public PublicKey publicKey = null;
+
   public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database) {
 
     this.id = id;
@@ -76,6 +78,10 @@ public final class Server {
 
     this.controller = new Controller(id, model, authentication);
     this.relay = relay;
+
+    KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
+    privateKey = keyPair.getPrivate();
+    publicKey = keyPair.getPublic();
 
     // Server initialization finished.
     LOG.info("Server initialized.");
@@ -140,7 +146,7 @@ public final class Server {
       final Uuid author = Uuid.SERIALIZER.read(in);
 	  final Uuid token = Uuid.SERIALIZER.read(in);
       final Uuid conversation = Uuid.SERIALIZER.read(in);
-      final String content = Serializers.STRING.read(in);
+      final String content = Serializers.readStringEnc(in, getServerPrivateKey());
 
       final Message message = controller.newMessage(author, token, conversation, content);
 
@@ -156,8 +162,8 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
 
-      final String username = Serializers.STRING.read(in);
-      final String password = Serializers.STRING.read(in);
+      final String username = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String password = Serializers.readStringEnc(in, getServerPrivateKey());
 
       final int result = controller.newUser(username, password);
 
@@ -166,8 +172,8 @@ public final class Server {
 
     } else if (type == NetworkCode.LOGIN_REQUEST) {
 
-      final String username = Serializers.STRING.read(in);
-      final String password = Serializers.STRING.read(in);
+      final String username = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String password = Serializers.readStringEnc(in, getServerPrivateKey());
 
       final User user = controller.login(username, password);
 
@@ -181,7 +187,7 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_CONVERSATION_REQUEST) {
 
-      final String title = Serializers.STRING.read(in);
+      final String title = Serializers.readStringEnc(in, getServerPrivateKey());
       final Uuid owner = Uuid.SERIALIZER.read(in);
 	  final Uuid token = Uuid.SERIALIZER.read(in);
 
@@ -278,6 +284,10 @@ public final class Server {
       Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_RANGE_RESPONSE);
       Serializers.collection(Message.SERIALIZER).write(out, messages);
 
+    } else if (type == NetworkCode.GET_SERVER_PUBLIC_KEY) {
+      Serializers.INTEGER.write(out, NetworkCode.GET_SERVER_PUBLIC_KEY);
+      Serializers.BYTES.write(out, publicKey.getEncoded());
+
     } else {
 
       // In the case that the message was not handled make a dummy message with
@@ -346,4 +356,6 @@ public final class Server {
     };
   }
 
+  public PublicKey getServerPublicKey() {return publicKey;}
+  private PrivateKey getServerPrivateKey() {return privateKey;}
 }

@@ -18,6 +18,8 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -33,16 +35,6 @@ public final class Serializers {
     @Override
     public Boolean read(InputStream in) throws IOException {
       return in.read() != 0;
-    }
-
-    @Override
-    public void write(OutputStream out, Boolean value, SecretKey key) throws IOException {
-      write(out, value);
-    }
-
-    @Override
-    public Boolean read(InputStream in, SecretKey key) throws IOException {
-      return read(in);
     }
   };
 
@@ -69,16 +61,6 @@ public final class Serializers {
       return value;
 
     }
-
-    @Override
-    public void write(OutputStream out, Integer value, SecretKey key) throws IOException {
-      write(out, value);
-    }
-
-    @Override
-    public Integer read(InputStream in, SecretKey key) throws IOException {
-      return read(in);
-    }
   };
 
   public static final Serializer<Long> LONG = new Serializer<Long>() {
@@ -103,16 +85,6 @@ public final class Serializers {
 
       return value;
 
-    }
-
-    @Override
-    public void write(OutputStream out, Long value, SecretKey key) throws IOException {
-      write(out, value);
-    }
-
-    @Override
-    public Long read(InputStream in, SecretKey key) throws IOException {
-      return read(in);
     }
   };
 
@@ -139,27 +111,32 @@ public final class Serializers {
       return array;
 
     }
-
-    @Override
-    public void write(OutputStream out, byte[] value, SecretKey key) throws IOException {
-      write(out, Encryptions.encrypt(value, key));
-    }
-
-    @Override
-    public byte[] read(InputStream input, SecretKey key) throws IOException {
-      final int length = INTEGER.read(input);
-      final byte[] array = new byte[length];
-
-      for (int i = 0; i < length; i++) {
-        array[i] = (byte)input.read();
-      }
-
-      return Encryptions.decrypt(array, key);
-    }
   };
 
+  public static void writeByteEnc(OutputStream out, byte[] value, PublicKey publicKey) throws IOException {
+
+    SecretKey key = Encryptor.makeSymmetricKey();
+    Encryptor.writeKey(out, key, publicKey);
+    INTEGER.write(out, value.length);
+    out.write(Encryptor.encrypt(value, key));
+
+  }
+
+  public static byte[] readByteEnc(InputStream input, PrivateKey privateKey) throws IOException {
+
+    SecretKey key = Encryptor.readKey(input, privateKey);
+    final int length = INTEGER.read(input);
+    final byte[] array = new byte[length];
+
+    for (int i = 0; i < length; i++) {
+      array[i] = (byte)input.read();
+    }
+
+    return Encryptor.decrypt(array, key);
+
+  }
+
   public static final Serializer<String> STRING = new Serializer<String>() {
-    private static final String _ENCODING = "ISO-8859-1";
 
     @Override
     public void write(OutputStream out, String value) throws IOException {
@@ -175,17 +152,25 @@ public final class Serializers {
 
     }
 
-    @Override
-    public void write(OutputStream out, String value, SecretKey key) throws IOException {
-      BYTES.write(out, Encryptions.encrypt(value.getBytes(_ENCODING), key));
-    }
-
-    @Override
-    public String read(InputStream input, SecretKey key) throws IOException {
-      String value = new String(BYTES.read(input));
-      return new String(Encryptions.decrypt(value.getBytes(_ENCODING), key), _ENCODING);
-    }
   };
+
+  private static final String _ENCODING = "ISO-8859-1";
+
+  public static void writeStringEnc(OutputStream out, String value, PublicKey publicKey) throws IOException {
+
+    SecretKey key = Encryptor.makeSymmetricKey();
+    Encryptor.writeKey(out, key, publicKey);
+    BYTES.write(out, Encryptor.encrypt(value.getBytes(_ENCODING), key));
+
+  }
+
+  public static String readStringEnc(InputStream input, PrivateKey privateKey) throws IOException {
+
+    SecretKey key = Encryptor.readKey(input, privateKey);
+    String value = new String(BYTES.read(input));
+    return new String(Encryptor.decrypt(value.getBytes(_ENCODING), key), _ENCODING);
+
+  }
 
   public static <T> Serializer<Collection<T>> collection(final Serializer<T> serializer) {
 
@@ -207,16 +192,6 @@ public final class Serializers {
           list.add(serializer.read(in));
         }
         return list;
-      }
-
-      @Override
-      public void write(OutputStream out, Collection<T> value, SecretKey key) throws IOException {
-        write(out, value);
-      }
-
-      @Override
-      public Collection<T> read(InputStream in, SecretKey key) throws IOException {
-        return read(in);
       }
     };
   }
@@ -241,16 +216,6 @@ public final class Serializers {
       @Override
       public T read(InputStream in) throws IOException {
         return in.read() == NO_VALUE ? null : serializer.read(in);
-      }
-
-      @Override
-      public void write(OutputStream out, T value, SecretKey key) throws IOException {
-        write(out, value);
-      }
-
-      @Override
-      public T read(InputStream in, SecretKey key) throws IOException {
-        return read(in);
       }
     };
   }

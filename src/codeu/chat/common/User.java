@@ -20,12 +20,9 @@ import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
+
+import javax.crypto.SecretKey;
 
 public final class User {
 

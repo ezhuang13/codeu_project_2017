@@ -20,12 +20,9 @@ import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Uuid;
-import codeu.chat.util.Time;
+import codeu.chat.util.*;
+
+import javax.crypto.SecretKey;
 
 
 public final class Message {
@@ -63,27 +60,27 @@ public final class Message {
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
-    /**
-    * @description Sends to outputstream a message represented as a compressed byte[]
-    */
-    @Override
-    public void write(OutputStream out, Message value) throws IOException {
+      /**
+       * @description Sends to outputstream a message represented as a compressed byte[]
+       */
+      @Override
+      public void write(OutputStream out, Message value) throws IOException {
 
-      byte[] message = MESSAGE.compress(value);
-      Serializers.BYTES.write(out, message);
+          byte[] message = MESSAGE.compress(value);
+          Serializers.BYTES.write(out, message);
 
-    }
+      }
 
-    /**
-    * @description Deserializes compressed byte[] and then decompresses to original message
-    */
-    @Override
-    public Message read(InputStream in) throws IOException {
+      /**
+       * @description Deserializes compressed byte[] and then decompresses to original message
+       */
+      @Override
+      public Message read(InputStream in) throws IOException {
 
-      byte[] message = Serializers.BYTES.read(in);
-      return MESSAGE.decompress(message);
+          byte[] message = Serializers.BYTES.read(in);
+          return MESSAGE.decompress(message);
 
-    }
+      }
   };
 
   public final Uuid id;

@@ -20,12 +20,9 @@ import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
+
+import javax.crypto.SecretKey;
 
 public final class ConversationSummary implements ListViewable {
 
@@ -65,21 +62,21 @@ public final class ConversationSummary implements ListViewable {
 
   public static final Serializer<ConversationSummary> SERIALIZER = new Serializer<ConversationSummary>() {
 
-    @Override
-    public void write(OutputStream out, ConversationSummary value) throws IOException {
+      @Override
+      public void write(OutputStream out, ConversationSummary value) throws IOException {
 
-      byte[] conversationSummary = CONVERSATION_SUMMARY.compress(value);
-      Serializers.BYTES.write(out, conversationSummary);
+          byte[] conversationSummary = CONVERSATION_SUMMARY.compress(value);
+          Serializers.BYTES.write(out, conversationSummary);
 
-    }
+      }
 
-    @Override
-    public ConversationSummary read(InputStream in) throws IOException {
+      @Override
+      public ConversationSummary read(InputStream in) throws IOException {
 
-      byte[] conversationSummary = Serializers.BYTES.read(in);
-      return CONVERSATION_SUMMARY.decompress(conversationSummary);
+          byte[] conversationSummary = Serializers.BYTES.read(in);
+          return CONVERSATION_SUMMARY.decompress(conversationSummary);
 
-    }
+      }
   };
 
   public final Uuid id;

@@ -49,5 +49,6 @@ public final class NetworkCode {
       RELAY_READ_REQUEST = 29,
       RELAY_READ_RESPONSE = 30,
       RELAY_WRITE_REQUEST = 31,
-      RELAY_WRITE_RESPONSE = 32;
+      RELAY_WRITE_RESPONSE = 32,
+      GET_SERVER_PUBLIC_KEY = 33;
 }
