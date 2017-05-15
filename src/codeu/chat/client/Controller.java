@@ -17,11 +17,7 @@ package codeu.chat.client;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 
 import codeu.chat.common.BasicController;
 import codeu.chat.common.Conversation;
@@ -43,8 +39,11 @@ public class Controller implements BasicController {
 
   private final ConnectionSource source;
 
-  public Controller(ConnectionSource source) {
+  private PublicKey serverPublicKey;
+
+  public Controller(ConnectionSource source, PublicKey key) {
     this.source = source;
+    this.serverPublicKey = key;
   }
 
   @Override
@@ -58,7 +57,7 @@ public class Controller implements BasicController {
       Uuid.SERIALIZER.write(connection.out(), author);
       Uuid.SERIALIZER.write(connection.out(), token);
       Uuid.SERIALIZER.write(connection.out(), conversation);
-      Serializers.writeStringEnc(connection.out(), body, getServerPublicKey());
+      Serializers.writeStringEnc(connection.out(), body, serverPublicKey);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_MESSAGE_RESPONSE) {
         response = Serializers.nullable(Message.SERIALIZER).read(connection.in());
@@ -81,9 +80,8 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_USER_REQUEST);
-      Serializers.writeStringEnc(connection.out(), username, getServerPublicKey());
-      Serializers.writeStringEnc(connection.out(), password, getServerPublicKey()
-      );
+      Serializers.writeStringEnc(connection.out(), username, serverPublicKey);
+      Serializers.writeStringEnc(connection.out(), password, serverPublicKey);
       LOG.info("newUser: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_USER_RESPONSE) {
@@ -108,8 +106,8 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.LOGIN_REQUEST);
-      Serializers.writeStringEnc(connection.out(), username, getServerPublicKey());
-      Serializers.writeStringEnc(connection.out(), password, getServerPublicKey());
+      Serializers.writeStringEnc(connection.out(), username, serverPublicKey);
+      Serializers.writeStringEnc(connection.out(), password, serverPublicKey);
       LOG.info("login: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.LOGIN_RESPONSE) {
@@ -137,7 +135,7 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_CONVERSATION_REQUEST);
-      Serializers.writeStringEnc(connection.out(), title, getServerPublicKey());
+      Serializers.writeStringEnc(connection.out(), title, serverPublicKey);
       Uuid.SERIALIZER.write(connection.out(), owner);
       Uuid.SERIALIZER.write(connection.out(), token);
 
@@ -152,25 +150,5 @@ public class Controller implements BasicController {
     }
 
     return response;
-  }
-
-  public PublicKey getServerPublicKey() {
-    try (final Connection connection = source.connect()) {
-
-      Serializers.INTEGER.write(connection.out(), NetworkCode.GET_SERVER_PUBLIC_KEY);
-
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_SERVER_PUBLIC_KEY) {
-        KeyFactory keyFactory = KeyFactory.getInstance(Serializers.STRING.read(connection.in()));
-        return keyFactory.generatePublic(new X509EncodedKeySpec(Serializers.BYTES.read(connection.in())));
-      } else {
-        LOG.error("Response from client setup failed.");
-      }
-
-    } catch (Exception ex) {
-      System.out.println("ERROR: Exception during client setup. Check log for details.");
-      LOG.error(ex, "Exception during client setup.");
-    }
-
-    return null;
   }
 }

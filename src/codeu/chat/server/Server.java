@@ -64,10 +64,10 @@ public final class Server {
   private final Authentication authentication;
 
   private final String ASYMMETRIC_ALGORITHM = "RSA";
-  private PrivateKey privateKey = null;
-  public PublicKey publicKey = null;
+  private PrivateKey privateKey;
+  public PublicKey publicKey;
 
-  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database) {
+  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database, final KeyPair keyPair) {
 
     this.id = id;
     this.secret = Arrays.copyOf(secret, secret.length);
@@ -79,9 +79,8 @@ public final class Server {
     this.controller = new Controller(id, model, authentication);
     this.relay = relay;
 
-    KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
-    privateKey = keyPair.getPrivate();
-    publicKey = keyPair.getPublic();
+    this.privateKey = keyPair.getPrivate();
+    this.publicKey = keyPair.getPublic();
 
     // Server initialization finished.
     LOG.info("Server initialized.");
@@ -286,6 +285,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_SERVER_PUBLIC_KEY) {
       Serializers.INTEGER.write(out, NetworkCode.GET_SERVER_PUBLIC_KEY);
+      Serializers.STRING.write(out, ASYMMETRIC_ALGORITHM);
       Serializers.BYTES.write(out, publicKey.getEncoded());
 
     } else {

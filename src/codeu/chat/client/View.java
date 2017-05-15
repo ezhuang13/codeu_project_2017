@@ -14,6 +14,9 @@
 
 package codeu.chat.client;
 
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -279,5 +282,26 @@ public final class View implements BasicView, LogicalView{
     }
 
     return messages;
+  }
+
+  public PublicKey getServerPublicKey() {
+    try (final Connection connection = source.connect()) {
+
+      Serializers.INTEGER.write(connection.out(), NetworkCode.GET_SERVER_PUBLIC_KEY);
+
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_SERVER_PUBLIC_KEY) {
+        KeyFactory keyFactory = KeyFactory.getInstance(Serializers.STRING.read(connection.in()));
+        byte[] keyBytes = Serializers.BYTES.read(connection.in());
+        return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
+      } else {
+        LOG.error("Response from client setup failed.");
+      }
+
+    } catch (Exception ex) {
+      System.out.println("ERROR: Exception during client setup. Check log for details.");
+      LOG.error(ex, "Exception during client setup.");
+    }
+
+    return null;
   }
 }

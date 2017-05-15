@@ -38,30 +38,44 @@ public class Encryptor {
     }
 
     public static byte[] wrap(SecretKey keyToWrap, PublicKey publicKey) {
+        Cipher cipher;
         try {
-            Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+            cipher = Cipher.getInstance(ASYMMETRIC_ALGORITHM);
+        }
+        catch(GeneralSecurityException gse) {return null;}
+
+        try {
             cipher.init(Cipher.WRAP_MODE, publicKey);
+        }
+        catch (InvalidKeyException iee) {System.out.println("INVALID public key."); return null;}
+
+        try {
             return cipher.wrap(keyToWrap);
         }
-        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
-        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
-        catch (GeneralSecurityException gse) {}
+        catch (InvalidKeyException iee) {System.out.println("INVALID symmetric key.");}
+        catch (IllegalBlockSizeException ibse) {System.out.println("ILLEGAL BLOCK SIZE on wrapping.");}
 
-        System.out.println(" on wrapping.");
         return null;
     }
 
     public static SecretKey unwrap(byte[] keyToUnwrap, PrivateKey privateKey) {
+        Cipher cipher;
         try {
-            Cipher cipher = Cipher.getInstance(SYMMETRIC_ALGORITHM);
+            cipher = Cipher.getInstance(ASYMMETRIC_ALGORITHM);
+        }
+        catch(GeneralSecurityException gse) {return null;}
+
+        try {
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
+        }
+        catch (InvalidKeyException iee) {System.out.println("INVALID public key."); return null;}
+
+        try {
             return (SecretKey) cipher.unwrap(keyToUnwrap, SYMMETRIC_ALGORITHM, Cipher.SECRET_KEY);
         }
-        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
-        catch (NoSuchPaddingException nspe) {System.out.print("NO SUCH PADDING");}
+        catch (InvalidKeyException iee) {System.out.println("INVALID symmetric key.");}
         catch (GeneralSecurityException gse) {}
 
-        System.out.println(" on unwrapping.");
         return null;
     }
 

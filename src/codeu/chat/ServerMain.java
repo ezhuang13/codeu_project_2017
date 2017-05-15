@@ -16,6 +16,9 @@
 package codeu.chat;
 
 import java.io.IOException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 import codeu.chat.common.Relay;
 import codeu.chat.common.Secret;
@@ -23,6 +26,7 @@ import codeu.chat.server.NoOpRelay;
 import codeu.chat.server.RemoteRelay;
 import codeu.chat.database.Database;
 import codeu.chat.server.Server;
+import codeu.chat.util.Encryptor;
 import codeu.chat.util.Logger;
 import codeu.chat.util.RemoteAddress;
 import codeu.chat.util.Uuid;
@@ -87,7 +91,10 @@ final class ServerMain {
 
     final Database database = new Database(dbPath);
 
-    final Server server = new Server(id, secret, relay, database);
+    // Public/private key pair for this server.
+    final KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
+
+    final Server server = new Server(id, secret, relay, database, keyPair);
 
     LOG.info("Created server.");
 

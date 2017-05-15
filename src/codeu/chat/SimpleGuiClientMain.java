@@ -47,8 +47,8 @@ final class SimpleGuiClientMain {
     try (
       final ConnectionSource source = new ClientConnectionSource(address.host, address.port)
     ) {
-      final Controller controller = new Controller(source);
       final View view = new View(source);
+      final Controller controller = new Controller(source, view.getServerPublicKey());
 
       LOG.info("Creating client...");
 

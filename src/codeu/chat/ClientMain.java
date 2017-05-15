@@ -44,8 +44,9 @@ final class ClientMain {
     final RemoteAddress address = RemoteAddress.parse(args[0]);
 
     final ConnectionSource source = new ClientConnectionSource(address.host, address.port);
-    final Controller controller = new Controller(source);
+
     final View view = new View(source);
+    final Controller controller = new Controller(source, view.getServerPublicKey());
 
     LOG.info("Creating client...");
     final Chat chat = new Chat(controller, view);

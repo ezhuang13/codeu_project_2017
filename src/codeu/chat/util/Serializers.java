@@ -167,8 +167,7 @@ public final class Serializers {
   public static String readStringEnc(InputStream input, PrivateKey privateKey) throws IOException {
 
     SecretKey key = Encryptor.readKey(input, privateKey);
-    String value = new String(BYTES.read(input));
-    return new String(Encryptor.decrypt(value.getBytes(_ENCODING), key), _ENCODING);
+    return new String(Encryptor.decrypt(BYTES.read(input), key), _ENCODING);
 
   }
 
