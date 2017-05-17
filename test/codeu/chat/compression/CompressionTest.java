@@ -8,9 +8,11 @@ package codeu.chat.compression;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
 import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.common.Message;
@@ -26,7 +28,6 @@ public final class CompressionTest{
 	private Message testMsg;
 	private ConversationSummary testConvoSummary;
 	private Conversation testConvo;
-	private User testUser;
 
 	@Before
 	public void setup(){
@@ -41,7 +42,17 @@ public final class CompressionTest{
 		testConvo = new Conversation(id, author, time, "This is another conversation between users foo and bar. Additionally, users have been added to the hash map.");
 		testConvo.users.add(author);
 		testConvo.users.add(next);
-		testUser = new User(author, "Mr. Foooooo", time);
+	}
+
+	@Test
+	public void testByteCompression(){
+		byte[] bytes = new byte[100];
+		for (int i = 0; i < 100; i += 3) {
+			bytes[i] = 1;
+		}
+		byte[] compressed = Compressions.BYTES.compress(bytes);
+		assertTrue(compressed.length < bytes.length);
+		assertArrayEquals(bytes, Compressions.BYTES.decompress(compressed));
 	}
 
 	@Test
@@ -59,6 +70,14 @@ public final class CompressionTest{
 	}
 
 	@Test
+	public void testSmallerMsg() throws IOException{
+		ByteArrayOutputStream uncompressedMsg = new ByteArrayOutputStream();
+		Message.toStream(uncompressedMsg, testMsg);
+		byte[] compressedMsg = Message.MESSAGE.compress(testMsg);
+		assertTrue(uncompressedMsg.toByteArray().length > compressedMsg.length);
+	}
+
+	@Test
 	public void testConvoSummaryCompression(){
 		ConversationSummary copy = ConversationSummary.CONVERSATION_SUMMARY.decompress(ConversationSummary.CONVERSATION_SUMMARY.compress(testConvoSummary));
 		assertTrue(ConversationSummary.equals(testConvoSummary, copy));
@@ -70,6 +89,14 @@ public final class CompressionTest{
 		ConversationSummary.SERIALIZER.write(output, testConvoSummary);
 		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
 		assertTrue(ConversationSummary.equals(testConvoSummary, ConversationSummary.SERIALIZER.read(input)));
+	}
+
+	@Test
+	public void testSmallerConvoSummary() throws IOException{
+		ByteArrayOutputStream uncompressedConvoSummary = new ByteArrayOutputStream();
+		ConversationSummary.toStream(uncompressedConvoSummary, testConvoSummary);
+		byte[] compressedConvoSummary = ConversationSummary.CONVERSATION_SUMMARY.compress(testConvoSummary);
+		assertTrue(uncompressedConvoSummary.toByteArray().length > compressedConvoSummary.length);
 	}
 
 	@Test
@@ -87,17 +114,11 @@ public final class CompressionTest{
 	}
 
 	@Test
-	public void testUserCompression(){
-		User copy = User.USER.decompress(User.USER.compress(testUser));
-		assertTrue(User.equals(testUser, copy));
+	public void testSmallerConvo() throws IOException{
+		ByteArrayOutputStream uncompressedConvo = new ByteArrayOutputStream();
+		Conversation.toStream(uncompressedConvo, testConvo);
+		byte[] compressedConvo = Conversation.CONVERSATION.compress(testConvo);
+		assertTrue(uncompressedConvo.toByteArray().length > compressedConvo.length);
 	}
 
-	@Test
-	public void testUserReadWrite() throws IOException{
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-		User.SERIALIZER.write(output, testUser);
-		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-		assertTrue(User.equals(testUser, User.SERIALIZER.read(input)));
-	}
-	
 }

@@ -3,6 +3,7 @@ package codeu.chat.server.storage;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -89,6 +90,19 @@ public final class StorageTest{
 		userConvos.addAll(storage.loadConversations(username2));
 		for (int i = 0; i < userConvos.size(); i++){
 			assertTrue(userConvos.get(i).isEqual(conversations.get(i)));
+		}
+		reset();
+	}
+
+	@Test
+	public void testChronological() throws SQLException{
+		addToStorage(3, 11, username);
+		ArrayList<ConversationData> basis = storage.loadConversations(username);
+		ArrayList<ConversationData> sorted = storage.loadConversations(username);
+		Collections.shuffle(sorted);
+		Collections.sort(sorted);
+		for (int i = 0; i < sorted.size(); i++){
+			assertEquals(basis.get(i).getCreation().inMs(), sorted.get(i).getCreation().inMs());
 		}
 		reset();
 	}

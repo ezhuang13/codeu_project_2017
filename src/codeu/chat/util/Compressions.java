@@ -27,11 +27,9 @@ public final class Compressions{
 	        deflater.setInput(data);
 
 	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-
-	        //Is this needed?
 	        deflater.finish();
+	        byte[] buffer = new byte[1024];
 
-	        byte[] buffer = new byte[100];
 	        while (!deflater.finished()) {  
 	            int count = deflater.deflate(buffer);
 	            outputStream.write(buffer, 0, count);   
@@ -54,7 +52,8 @@ public final class Compressions{
 	        inflater.setInput(data);
 
 	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);  
-	        byte[] buffer = new byte[1024];  
+	        byte[] buffer = new byte[1024];
+
 	        while (!inflater.finished()) {
 	            int count = 0;
 	            try{
