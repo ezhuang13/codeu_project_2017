@@ -95,9 +95,9 @@ final class ServerMain {
 
       try {
 
-        //LOG.info("Established connection...");
+        LOG.verbose("Established connection...");
         final Connection connection = serverSource.connect();
-        //LOG.info("Connection established.");
+        LOG.verbose("Connection established.");
 
         server.handleConnection(connection);
 
