@@ -1,6 +1,6 @@
 /**
  * @author Eric Zhuang, CodeU Project Group 6
- * @description A specific compression implementation for byte[]
+ * @description Class for outlining compression of different data types
 */ 
 
 package codeu.chat.util;
@@ -12,6 +12,11 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;  
 import java.util.zip.Inflater;
 
+/**
+* @description Class for outlining compression of different data types.
+* Currently only contains compression for bytes, but left general in case
+* a need ever arose for additional types
+*/
 public final class Compressions{
 
 	public static final Compression<byte[]> BYTES = new Compression<byte[]>(){

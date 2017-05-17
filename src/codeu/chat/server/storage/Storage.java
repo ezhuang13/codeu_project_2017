@@ -23,7 +23,7 @@ import codeu.chat.server.database.MessageSchema;
 import codeu.chat.server.storage.ConversationData;
 import codeu.chat.server.storage.MessageData;
 
-/*
+/**
 * @description Manager for conversation and message storage
 */
 public final class Storage{
@@ -32,11 +32,10 @@ public final class Storage{
 
 	private final Database database;
 
-	//public for sake of testing
 	public ConversationTable conversationTable;
 	public MessageTable messageTable;
 
-	/*
+	/**
 	* @brief Creates the storage manager
 	* @param database The server database
 	*/
@@ -53,7 +52,7 @@ public final class Storage{
 		}
 	}
 
-	/*
+	/**
 	* @brief Adds a conversation to the database
 	* @param username The username of the owner of the conversation
 	* @param time The time of creation in ms
@@ -76,7 +75,7 @@ public final class Storage{
 		}
 	}
 
-	/*
+	/**
 	* @brief Adds a message to the database
 	* @param cid The conversation the message belongs in
 	* @param time The time of creation in ms
@@ -96,7 +95,7 @@ public final class Storage{
 		}
 	}
 
-	/*
+	/**
 	* @brief Loads all conversations stored in the database that are associated with the user
 	* @param username The username whose conversations will be returned
 	* @return An ArrayList of conversation data, where each conversation also has its
@@ -129,7 +128,7 @@ public final class Storage{
 		return conversationData;
 	}
 
-	/*
+	/**
 	* @brief Loads all messages stored in the database that are associated with the conversation
 	* @param cid The conversation whose messages will be returned
 	* @return An ArrayList of message data associated with the given conversation,
