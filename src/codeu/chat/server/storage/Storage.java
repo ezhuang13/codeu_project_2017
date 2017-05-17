@@ -63,9 +63,9 @@ public final class Storage{
 	public int addConversation(String username, long time, String title){
 		try{
 			Map<String, String> fields = new HashMap<String, String>();
-			fields.put("username", username);
-			fields.put("time_created", Long.toString(time));
-			fields.put("title", title);
+			fields.put(ConversationSchema.UNIQUE_ID, username);
+			fields.put(ConversationSchema.TIMESTAMP, Long.toString(time));
+			fields.put(ConversationSchema.TEXT, title);
 			//return the id field of the added conversation
 			LOG.info("Conversation added");
 			return conversationTable.create(fields);
@@ -85,9 +85,9 @@ public final class Storage{
 	public void addMessage(int cid, long time, String content){
 		try{
 			Map<String, String> fields = new HashMap<String, String>();
-			fields.put("conversation_id", Integer.toString(cid));
-			fields.put("time_created", Long.toString(time));
-			fields.put("content", content);
+			fields.put(MessageSchema.UNIQUE_ID, Integer.toString(cid));
+			fields.put(MessageSchema.TIMESTAMP, Long.toString(time));
+			fields.put(MessageSchema.TEXT, content);
 			messageTable.create(fields);
 			LOG.info("Messsage added");
 		}
@@ -106,17 +106,16 @@ public final class Storage{
 		ArrayList<ConversationData> conversationData = new ArrayList<ConversationData>();
 
 		try{
-			//Compiles all conversations that match the given username
-			List<DBObject<ConversationSchema>> conversationList = new ArrayList<DBObject<ConversationSchema>>();
-			conversationList = conversationTable.find("username", username);
+			//Queries all conversations that match the given username
+			List<DBObject<ConversationSchema>> conversationList =
+			conversationTable.find(ConversationSchema.UNIQUE_ID, username);
 
 			//Iterates through conversation DBObjects and extracts data
 			for (DBObject<ConversationSchema> c: conversationList){
-				String title = c.get("title");
-				Time time = Time.fromMs(Long.parseLong(c.get("time_created")));
-				ArrayList<MessageData> messages = new ArrayList<MessageData>();
+				String title = c.get(ConversationSchema.TEXT);
+				Time time = Time.fromMs(Long.parseLong(c.get(ConversationSchema.TIMESTAMP)));
 				String cid = c.get("_id");
-				messages = loadMessages(cid);
+				ArrayList<MessageData> messages = loadMessages(cid);
 				ConversationData convo = new ConversationData(title, time, Integer.parseInt(cid), messages);
 				conversationData.add(convo);
 			}
@@ -140,14 +139,14 @@ public final class Storage{
 		ArrayList<MessageData> messageData = new ArrayList<MessageData>();
 
 		try{
-			//Compiles all messages that match the given conversation id
-			List<DBObject<MessageSchema>> messageList = new ArrayList<DBObject<MessageSchema>>();
-			messageList = messageTable.find("conversation_id", cid);
+			//Queries all messages that match the given conversation id
+			List<DBObject<MessageSchema>> messageList =
+			messageTable.find(MessageSchema.UNIQUE_ID, cid);
 
 			//Iterates through message DBObjects and extracts data
 			for (DBObject<MessageSchema> m: messageList){
-				String content = m.get("content");
-				Time time = Time.fromMs(Long.parseLong(m.get("time_created")));
+				String content = m.get(MessageSchema.TEXT);
+				Time time = Time.fromMs(Long.parseLong(m.get(MessageSchema.TIMESTAMP)));
 				MessageData message = new MessageData(content, time);
 				messageData.add(message);
 			}

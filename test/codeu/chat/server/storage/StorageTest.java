@@ -29,7 +29,7 @@ public final class StorageTest{
 	public void setup(){
 		conversations = new ArrayList<ConversationData>();
 		database = new Database("test.db");
-		Storage storage = new Storage(database);
+		storage = new Storage(database);
 		username = "test";
 		//Add to the database
 		for (int i = 0; i < 10; i++){
@@ -51,10 +51,7 @@ public final class StorageTest{
 
 	@Test
 	public void testLoadingConversations(){
-		ArrayList<ConversationData> testConversations = new ArrayList<ConversationData>();
-		//For whatever reason storage becomes null when entering this test, so everything done in setup is effectively wiped
-		//Any ideas as to why would be helpful
-		//testConversations = storage.loadConversations(username);
+		//ArrayList<ConversationData> testConversations = storage.loadConversations(username);
 		//for (int i = 0; i < testConversations.size(); i++){
 		//	assertTrue(testConversations.get(i).isEqual(conversations.get(i)));
 		//}

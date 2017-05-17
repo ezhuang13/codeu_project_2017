@@ -57,6 +57,6 @@ public final class ConversationData implements Comparable<ConversationData>{
 			return title.equals(compareConvo.getTitle()) && id == compareConvo.getId() &&
 					creation.compareTo(compareConvo.getCreation()) == 0;
 		}
-		else return false;
+		return false;
 	}
 }

@@ -90,7 +90,7 @@ public final class Server {
       public void run() {
         try {
 
-          //LOG.info("Reading update from relay...");
+          LOG.verbose("Reading update from relay...");
 
           for (final Relay.Bundle bundle : relay.read(id, secret, lastSeen, 32)) {
             onBundle(bundle);
@@ -114,13 +114,13 @@ public final class Server {
       public void run() {
         try {
 
-          //LOG.info("Handling connection...");
+          LOG.verbose("Handling connection...");
 
           final boolean success = onMessage(
               connection.in(),
               connection.out());
 
-          //LOG.info("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
+          LOG.verbose("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
         } catch (Exception ex) {
 
           LOG.error(ex, "Exception while handling connection.");
@@ -158,8 +158,6 @@ public final class Server {
           message.id));
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
-
-      //might have to also write conversations back out to the client
 
       final String username = Serializers.STRING.read(in);
       final String password = Serializers.STRING.read(in);

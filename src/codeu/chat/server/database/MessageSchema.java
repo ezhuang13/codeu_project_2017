@@ -8,9 +8,17 @@ import codeu.chat.database.Schema;
 */
 public class MessageSchema extends Schema{
 
+	//Declare field names
+	public static final String UNIQUE_ID = "conversation_id";
+	public static final String TIMESTAMP = "time_created";
+	public static final String TEXT = "content";
+	//Declare field properties
+	private static final String PROP_TEXT = "TEXT(255)";
+	private static final String PROP_INT = "INT";
+
 	public MessageSchema(){
-		addField("conversation_id", "INT");
-		addField("time_created", "TEXT(255)");
-		addField("content", "TEXT(255)");
+		addField(UNIQUE_ID, PROP_INT);
+		addField(TIMESTAMP, PROP_TEXT);
+		addField(TEXT, PROP_TEXT);
 	}
 }
