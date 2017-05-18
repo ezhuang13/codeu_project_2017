@@ -3,16 +3,17 @@ package codeu.chat.server.storage;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.After;
 
 import codeu.chat.database.Database;
 import codeu.chat.database.DBObject;
 import codeu.chat.server.database.ConversationSchema;
+import codeu.chat.server.database.MessageSchema;
+
 
 import codeu.chat.util.Time;
 
@@ -23,17 +24,19 @@ public final class StorageTest{
 
 	private Database database;
 	private Storage storage;
-	private ArrayList<ConversationData> conversations;
-	private String username, username2;
+	private static final String USERNAME = "test";
+	private static final String USERNAME2 = "test2";
 
-	//Adds multiple conversations and messages to storage and conversations
-	private void addToStorage(int numConvos, int numMessages, String name){
-		for (int i = 0; i < numConvos; i++){
+	//Adds multiple conversations and messages to storage
+	//Returns an ArrayList containing the expected values based on what was added
+	private ArrayList<ConversationData> addToStorage(String name){
+		ArrayList<ConversationData> expected = new ArrayList<ConversationData>();
+		for (int i = 0; i < 10; i++){
 			Time convoTime = Time.now();
 			String convoTitle = "Test convo " + i;
 			int cid = storage.addConversation(name, convoTime.inMs(), convoTitle);
 			ArrayList<MessageData> messages = new ArrayList<MessageData>();
-			for (int j = 0; j < numMessages; j++){
+			for (int j = 0; j < 5; j++){
 				String messageContent = "Test message " + j;
 				Time messageTime = Time.now();
 				storage.addMessage(cid, messageTime.inMs(), messageContent);
@@ -41,75 +44,74 @@ public final class StorageTest{
 				messages.add(m);
 			}
 			ConversationData c = new ConversationData(convoTitle, convoTime, cid, messages);
-			conversations.add(c);
+			expected.add(c);
 		}
+		return expected;
 	}
 
-	//Resets fields for next tests
-	private void reset() throws SQLException{
+	//Create the storage manager, clear the database, and then reinitialize it
+	@Before
+	public void setup() throws SQLException{
+		database = new Database("test.db");
+		storage = new Storage(database);
 		storage.messageTable.destroy();
 		storage.conversationTable.destroy();
-		storage = new Storage(database);
-		conversations.clear();
-	}
-
-	@Before
-	public void setup(){
-		database = new Database("test.db");
-		username = "test";
-		username2 = "test2";
-		conversations = new ArrayList<ConversationData>();
 		storage = new Storage(database);
 	}
 
 	@Test
 	public void testAddingData() throws SQLException{
-		addToStorage(15, 3, username);
-		addToStorage(12, 3, username2);
-		List<DBObject<ConversationSchema>> addedConvos = storage.conversationTable.find(ConversationSchema.UNIQUE_ID, username);
-		assertEquals(addedConvos.size(), 15);
-		assertEquals(conversations.size(), 27);
-		reset();
+		//Checks that conversations are added as expected
+		ArrayList<ConversationData> expected = addToStorage(USERNAME);
+		List<DBObject<ConversationSchema>> actualConvos = storage.conversationTable.find(ConversationSchema.UNIQUE_ID, USERNAME);
+		for (int i = 0; i < 10; i++){
+			ConversationData expectedData = expected.get(i);
+			DBObject<ConversationSchema> actualData = actualConvos.get(i);
+			assertTrue(expectedData.getTitle().equals(actualData.get(ConversationSchema.TEXT)));
+			assertEquals(expectedData.getCreation().inMs(), Long.parseLong(actualData.get(ConversationSchema.TIMESTAMP)));
+			//Checks that messages are added as expected
+			ArrayList<MessageData> expectedMsgs = expectedData.getMessages();
+			List<DBObject<MessageSchema>> actualMsgs = storage.messageTable.find(MessageSchema.UNIQUE_ID, Integer.toString(expectedData.getId()));
+			for (int j = 0; j < 5; j++) {
+				MessageData expectedMsg = expectedMsgs.get(j);
+				DBObject<MessageSchema> actualMsg = actualMsgs.get(j);
+				assertTrue(expectedMsg.getContent().equals(actualMsg.get(MessageSchema.TEXT)));
+				assertEquals(expectedMsg.getCreation().inMs(), Long.parseLong(actualMsg.get(MessageSchema.TIMESTAMP)));
+			}
+		}
 	}
 
 	@Test
-	public void testLoadingData() throws SQLException{
-		addToStorage(10, 5, username);
-		ArrayList<ConversationData> testConversations = storage.loadConversations(username);
-		for (int i = 0; i < testConversations.size(); i++){
-			assertTrue(testConversations.get(i).isEqual(conversations.get(i)));
+	public void testLoadingData(){
+		ArrayList<ConversationData> expected = addToStorage(USERNAME);
+		ArrayList<ConversationData> actual = storage.loadConversations(USERNAME);
+		for (int i = 0; i < 10; i++){
+			assertTrue(actual.get(i).isEqual(expected.get(i)));
 		}
-		reset();
 	}
 
 	@Test
-	public void testMultipleUsers() throws SQLException{
-		addToStorage(8, 3, username);
-		addToStorage(4, 7, username2);
-		ArrayList<ConversationData> userConvos = storage.loadConversations(username);
-		userConvos.addAll(storage.loadConversations(username2));
-		for (int i = 0; i < userConvos.size(); i++){
-			assertTrue(userConvos.get(i).isEqual(conversations.get(i)));
+	public void testMultipleUsers(){
+		ArrayList<ConversationData> expected = addToStorage(USERNAME);
+		expected.addAll(addToStorage(USERNAME2));
+		ArrayList<ConversationData> actual = storage.loadConversations(USERNAME);
+		actual.addAll(storage.loadConversations(USERNAME2));
+		for (int i = 0; i < 20; i++){
+			assertTrue(actual.get(i).isEqual(expected.get(i)));
 		}
-		reset();
 	}
 
 	@Test
-	public void testChronological() throws SQLException{
-		addToStorage(3, 11, username);
-		ArrayList<ConversationData> basis = storage.loadConversations(username);
-		ArrayList<ConversationData> sorted = storage.loadConversations(username);
-		Collections.shuffle(sorted);
-		Collections.sort(sorted);
-		for (int i = 0; i < sorted.size(); i++){
-			assertEquals(basis.get(i).getCreation().inMs(), sorted.get(i).getCreation().inMs());
+	public void testChronological(){
+		addToStorage(USERNAME);
+		ArrayList<ConversationData> sorted = storage.loadConversations(USERNAME);
+		for (int i = 0; i < 9; i++){
+			ConversationData cur = sorted.get(i);
+			ConversationData next = sorted.get(i + 1);
+			assertTrue(cur.getCreation().inMs() < next.getCreation().inMs());
+			for (int j = 0; j < 4; j++) {
+				assertTrue(cur.getMessages().get(j).getCreation().inMs() < next.getMessages().get(j).getCreation().inMs());
+			}
 		}
-		reset();
-	}
-
-	@After
-	public void cleanup() throws SQLException{
-		storage.messageTable.destroy();
-		storage.conversationTable.destroy();
 	}
 }
