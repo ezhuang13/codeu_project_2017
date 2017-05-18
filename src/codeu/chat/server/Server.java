@@ -68,7 +68,9 @@ public final class Server {
 
   private final Storage storage;
 
-  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database) {
+  private final boolean compressFlag;
+
+  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database, final boolean compressFlag) {
 
     this.id = id;
     this.secret = Arrays.copyOf(secret, secret.length);
@@ -81,6 +83,8 @@ public final class Server {
 
     this.controller = new Controller(id, model, authentication, storage);
     this.relay = relay;
+
+    this.compressFlag = compressFlag;
 
     // Server initialization finished.
     LOG.info("Server initialized.");

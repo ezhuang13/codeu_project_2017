@@ -56,9 +56,20 @@ final class ServerMain {
     // of the server.
     final String persistentPath = args[3];
 
-    final RemoteAddress relayAddress = args.length > 4 ?
-                                       RemoteAddress.parse(args[4]) :
-                                       null;
+    //Determine optional args
+    RemoteAddress address = null;
+    boolean enableCompression = true;
+    if (args.length > 4){
+    	for (int i = 4; i < args.length; i++){
+    		if (args[i] == "c")
+    			enableCompression = false;
+    		else
+    			address = RemoteAddress.parse(args[i]);
+    	}
+    }
+
+    final RemoteAddress relayAddress = address;
+    final boolean compressFlag = enableCompression;
 
     try (
         final ConnectionSource serverSource = ServerConnectionSource.forPort(myPort);
@@ -66,7 +77,7 @@ final class ServerMain {
     ) {
 
       LOG.info("Starting server...");
-      runServer(id, secret, serverSource, relaySource, persistentPath + "/server.db");
+      runServer(id, secret, serverSource, relaySource, persistentPath + "/server.db", compressFlag);
 
     } catch (IOException ex) {
 
@@ -79,7 +90,8 @@ final class ServerMain {
                                 byte[] secret,
                                 ConnectionSource serverSource,
                                 ConnectionSource relaySource,
-                                String dbPath) {
+                                String dbPath,
+                                boolean compressFlag) {
 
     final Relay relay = relaySource == null ?
                         new NoOpRelay() :
@@ -87,7 +99,7 @@ final class ServerMain {
 
     final Database database = new Database(dbPath);
 
-    final Server server = new Server(id, secret, relay, database);
+    final Server server = new Server(id, secret, relay, database, compressFlag);
 
     LOG.info("Created server.");
 

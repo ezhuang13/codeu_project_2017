@@ -20,10 +20,11 @@ TEAM_ID="$1"
 TEAM_SECRET="$2"
 PORT="$3"
 PERSISTENT_DIR="$4"
-RELAY_ADDRESS="$5"
+OPT1="$5"
+OPT2="$6"
 
 if [[ "$TEAM_ID" == "" || "$TEAM_SECRET" == "" || "$PORT" == "" || "$PERSISTENT_DIR" == "" ]] ; then
-  echo 'usage: <TEAM ID> <TEAM SECRET> <PORT> <PERSISTENT> <DATABASE> [RELAY ADDRESS]'
+  echo 'usage: <TEAM ID> <TEAM SECRET> <PORT> <PERSISTENT> <DATABASE> [OPTIONALS]'
   echo ''
   echo 'TEAM ID :        The id registered with the relay server. If you are'
   echo '                 not connecting to a relay server, use "100".'
@@ -37,22 +38,32 @@ if [[ "$TEAM_ID" == "" || "$TEAM_SECRET" == "" || "$PORT" == "" || "$PERSISTENT_
   echo '                 relay server, the address must be IP@PORT where IP is'
   echo '                 the ip address of the relay server and PORT is the port'
   echo '                 the relay server is listing on.'
+  echo 'DISABLE          This value is optional. If you want to disable compression,'
+  echo 'COMPRESSION :    pass in the character c.'
   echo ''
   exit 1
 fi
 
 
-if [ "$RELAY_ADDRESS" == "" ] ; then
+if [ "$OPT1" == ""  ] ; then
   java -cp $cp codeu.chat.ServerMain \
       "$TEAM_ID" \
       "$TEAM_SECRET" \
       "$PORT" \
       "$PERSISTENT_DIR"
+elif [ "$OPT2" == "" ] ; then
+  java -cp $cp codeu.chat.ServerMain \
+      "$TEAM_ID" \
+      "$TEAM_SECRET" \
+      "$PORT" \
+      "$PERSISTENT_DIR" \
+      "$OPT1"
 else
   java -cp $cp codeu.chat.ServerMain \
       "$TEAM_ID" \
       "$TEAM_SECRET" \
       "$PORT" \
       "$PERSISTENT_DIR" \
-      "$RELAY_ADDRESS"
+      "$OPT1" \
+      "$OPT2"
 fi
