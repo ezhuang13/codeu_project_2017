@@ -36,7 +36,7 @@ public final class StorageTest{
 			String convoTitle = "Test convo " + i;
 			int cid = storage.addConversation(name, convoTime.inMs(), convoTitle);
 			ArrayList<MessageData> messages = new ArrayList<MessageData>();
-			for (int j = 0; j < numMessages; j++){
+			for (int j = 0; j < 5; j++){
 				String messageContent = "Test message " + j;
 				Time messageTime = Time.now();
 				storage.addMessage(cid, messageTime.inMs(), messageContent);
