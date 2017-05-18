@@ -30,6 +30,7 @@ import codeu.chat.database.Database;
 import codeu.chat.server.database.UserSchema;
 import codeu.chat.server.authentication.Authentication;
 import codeu.chat.authentication.AuthenticationCode;
+import codeu.chat.server.storage.Storage;
 
 public final class BasicControllerTest {
 
@@ -39,6 +40,7 @@ public final class BasicControllerTest {
   private Database database;
   private UserSchema userSchema;
   private Authentication authentication;
+  private Storage storage;
 
   private User user;
 
@@ -49,9 +51,10 @@ public final class BasicControllerTest {
     userSchema = new UserSchema();
     userSchema.dropTable("users", database);
     authentication = new Authentication(database);
+    storage = new Storage(database);
 
     model = new Model();
-    controller = new Controller(Uuid.NULL, model, authentication);
+    controller = new Controller(Uuid.NULL, model, authentication, storage);
   }
 
   @Test
