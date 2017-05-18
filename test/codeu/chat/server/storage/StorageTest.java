@@ -14,6 +14,7 @@ import codeu.chat.database.DBObject;
 import codeu.chat.server.database.ConversationSchema;
 import codeu.chat.server.database.MessageSchema;
 
+
 import codeu.chat.util.Time;
 
 /*
@@ -35,7 +36,7 @@ public final class StorageTest{
 			String convoTitle = "Test convo " + i;
 			int cid = storage.addConversation(name, convoTime.inMs(), convoTitle);
 			ArrayList<MessageData> messages = new ArrayList<MessageData>();
-			for (int j = 0; j < 5; j++){
+			for (int j = 0; j < numMessages; j++){
 				String messageContent = "Test message " + j;
 				Time messageTime = Time.now();
 				storage.addMessage(cid, messageTime.inMs(), messageContent);
@@ -87,6 +88,43 @@ public final class StorageTest{
 		for (int i = 0; i < 10; i++){
 			assertTrue(actual.get(i).isEqual(expected.get(i)));
 		}
+	}
+
+	//Resets fields for next tests
+	private void reset() throws SQLException{
+		storage.messageTable.destroy();
+		storage.conversationTable.destroy();
+		storage = new Storage(database);
+		conversations.clear();
+	}
+
+	@Before
+	public void setup(){
+		database = new Database("test.db");
+		username = "test";
+		username2 = "test2";
+		conversations = new ArrayList<ConversationData>();
+		storage = new Storage(database);
+	}
+
+	@Test
+	public void testAddingData() throws SQLException{
+		addToStorage(15, 3, username);
+		addToStorage(12, 3, username2);
+		List<DBObject<ConversationSchema>> addedConvos = storage.conversationTable.find(ConversationSchema.UNIQUE_ID, username);
+		assertEquals(addedConvos.size(), 15);
+		assertEquals(conversations.size(), 27);
+		reset();
+	}
+
+	@Test
+	public void testLoadingData() throws SQLException{
+		addToStorage(10, 5, username);
+		ArrayList<ConversationData> testConversations = storage.loadConversations(username);
+		for (int i = 0; i < testConversations.size(); i++){
+			assertTrue(testConversations.get(i).isEqual(conversations.get(i)));
+		}
+		reset();
 	}
 
 	@Test
