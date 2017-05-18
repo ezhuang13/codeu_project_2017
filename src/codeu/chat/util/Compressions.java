@@ -1,6 +1,6 @@
 /**
  * @author Eric Zhuang, CodeU Project Group 6
- * @description Class for outlining compression of different data types
+ * @description A specific compression implementation for byte[]
 */ 
 
 package codeu.chat.util;
@@ -12,11 +12,6 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;  
 import java.util.zip.Inflater;
 
-/**
-* @description Class for outlining compression of different data types.
-* Currently only contains compression for bytes, but left general in case
-* a need ever arose for additional types
-*/
 public final class Compressions{
 
 	public static final Compression<byte[]> BYTES = new Compression<byte[]>(){
@@ -32,9 +27,11 @@ public final class Compressions{
 	        deflater.setInput(data);
 
 	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-	        deflater.finish();
-	        byte[] buffer = new byte[1024];
 
+	        //Is this needed?
+	        deflater.finish();
+
+	        byte[] buffer = new byte[100];
 	        while (!deflater.finished()) {  
 	            int count = deflater.deflate(buffer);
 	            outputStream.write(buffer, 0, count);   
@@ -57,8 +54,7 @@ public final class Compressions{
 	        inflater.setInput(data);
 
 	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);  
-	        byte[] buffer = new byte[1024];
-
+	        byte[] buffer = new byte[1024];  
 	        while (!inflater.finished()) {
 	            int count = 0;
 	            try{

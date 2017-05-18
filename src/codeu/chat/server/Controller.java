@@ -41,9 +41,9 @@ public final class Controller implements RawController, BasicController {
 
   private final Authentication authentication;
   private final Storage storage;
-  //Maps the UUID of a conversation to its unique ID
+  //Maps the uuid of a conversation to its unique ID
   private HashMap<Uuid, Integer> conversationIds = new HashMap<Uuid, Integer>();
-  //Maps the UUID of a user to its unique username
+  //Maps the uuid of a user to its unique username
   private HashMap<Uuid, String> userIds = new HashMap<Uuid, String>();
 
   public Controller(Uuid serverId, Model model, Authentication authentication, Storage storage) {
@@ -174,24 +174,24 @@ public final class Controller implements RawController, BasicController {
           result);
     }
 
-    //Loads in all of the user's conversations
-    ArrayList<ConversationData> conversations = storage.loadConversations(username);
+    //Load in all of the user's conversations and messages
+    ArrayList<ConversationData> conversations = new ArrayList<ConversationData>();
+    conversations = storage.loadConversations(username);
     for (ConversationData c: conversations){
       Uuid convoId = createId();
       Conversation currentConvo = newConversation(convoId, c.getTitle(), id, c.getCreation());
+      conversationIds.put(convoId, c.getId());
       if (currentConvo != null){
-        //Maps the UUID of the created conversation to its database ID
-        conversationIds.put(convoId, c.getId());
-        //Loads in all of the conversation's messages
         for (MessageData m: c.getMessages()){
           Message currentMessage = newMessage(createId(), id, convoId, m.getContent(), m.getCreation());
-          if (currentMessage == null)
+          if (currentMessage == null){
             LOG.info("Failed to load in a message");
+          }
         }
-
       }
-      else
+      else{
         LOG.info("Failed to load in a conversation");
+      }
     }
 
     return user;
