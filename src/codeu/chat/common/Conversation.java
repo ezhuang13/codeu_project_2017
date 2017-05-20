@@ -22,125 +22,128 @@ import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashSet;
 
-import codeu.chat.util.*;
-
-import javax.crypto.SecretKey;
+import codeu.chat.util.Serializer;
+import codeu.chat.util.Serializers;
+import codeu.chat.util.Compression;
+import codeu.chat.util.Compressions;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 
 public final class Conversation {
 
-    public static final Compression<Conversation> CONVERSATION = new Compression<Conversation>(){
+  public static final Compression<Conversation> CONVERSATION = new Compression<Conversation>(){
 
-        @Override
-        public byte[] compress(Conversation data){
-            ByteArrayOutputStream convoStream = new ByteArrayOutputStream();
-            try{
-                toStream(convoStream, data);
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-            byte[] byteConvo = convoStream.toByteArray();
-
-            return Compressions.BYTES.compress(byteConvo);
+    @Override
+    public byte[] compress(Conversation data){
+        ByteArrayOutputStream convoStream = new ByteArrayOutputStream();
+        try{
+            toStream(convoStream, data);
+        }catch (IOException e){
+            e.printStackTrace();
         }
+        byte[] byteConvo = convoStream.toByteArray();
 
-        @Override
-        public Conversation decompress(byte[] data){
+        return Compressions.BYTES.compress(byteConvo);
+    }
 
-            data = Compressions.BYTES.decompress(data);
+    @Override
+    public Conversation decompress(byte[] data){
 
-            ByteArrayInputStream byteConvo = new ByteArrayInputStream(data);
+      data = Compressions.BYTES.decompress(data);
 
-            Conversation convo = new Conversation(Uuid.NULL, Uuid.NULL, Time.now(), "");
-            try {
-                convo = fromStream(byteConvo);
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-            return convo;
-        }
+      ByteArrayInputStream byteConvo = new ByteArrayInputStream(data);
 
-    };
+      Conversation convo = new Conversation(Uuid.NULL, Uuid.NULL, Time.now(), "");
+      try {
+        convo = fromStream(byteConvo);
+      }catch (IOException e){
+          e.printStackTrace();
+      }
+      return convo;
+    }
 
-    public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
+  };
 
-        @Override
-        public void write(OutputStream out, Conversation value) throws IOException {
+  public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
 
-            byte[] conversation = CONVERSATION.compress(value);
-            Serializers.BYTES.write(out, conversation);
+    @Override
+    public void write(OutputStream out, Conversation value) throws IOException {
 
-        }
-
-        @Override
-        public Conversation read(InputStream in) throws IOException {
-
-            byte[] conversation = Serializers.BYTES.read(in);
-            return CONVERSATION.decompress(conversation);
-
-        }
-    };
-
-    public final ConversationSummary summary;
-
-    public final Uuid id;
-    public final Uuid owner;
-    public final Time creation;
-    public final String title;
-    public final Collection<Uuid> users = new HashSet<>();
-    public Uuid firstMessage = Uuid.NULL;
-    public Uuid lastMessage = Uuid.NULL;
-
-    public Conversation(Uuid id, Uuid owner, Time creation, String title) {
-
-        this.id = id;
-        this.owner = owner;
-        this.creation = creation;
-        this.title = title;
-
-        this.summary = new ConversationSummary(id, owner, creation, title);
+      byte[] conversation = CONVERSATION.compress(value);
+      Serializers.BYTES.write(out, conversation);
 
     }
 
-    /**
-     * @param a, b The conversations that are compared to each other
-     * @return true if the fields of the conversations are identical, otherwise false
-     */
-    public static boolean equals(Conversation a, Conversation b){
-        //Checking the conversation summary for equality checks all other fields
-        return a.users.equals(b.users) && ConversationSummary.equals(a.summary, b.summary);
-    }
+    @Override
+    public Conversation read(InputStream in) throws IOException {
 
-    /**
-     * @brief Formerly the overridden Serializer write
-     */
-    public static void toStream(OutputStream out, Conversation value) throws IOException{
-        Uuid.SERIALIZER.write(out, value.id);
-        Uuid.SERIALIZER.write(out, value.owner);
-        Time.SERIALIZER.write(out, value.creation);
-        Serializers.STRING.write(out, value.title);
-        Serializers.collection(Uuid.SERIALIZER).write(out, value.users);
-        Uuid.SERIALIZER.write(out, value.firstMessage);
-        Uuid.SERIALIZER.write(out, value.lastMessage);
-    }
-
-    /**
-     * @brief Formerly the overridden Serializer read
-     */
-    public static Conversation fromStream(InputStream in) throws IOException {
-
-        final Conversation value = new Conversation(
-                Uuid.SERIALIZER.read(in),
-                Uuid.SERIALIZER.read(in),
-                Time.SERIALIZER.read(in),
-                Serializers.STRING.read(in)
-        );
-
-        value.users.addAll(Serializers.collection(Uuid.SERIALIZER).read(in));
-
-        value.firstMessage = Uuid.SERIALIZER.read(in);
-        value.lastMessage = Uuid.SERIALIZER.read(in);
-
-        return value;
+      byte[] conversation = Serializers.BYTES.read(in);
+      return CONVERSATION.decompress(conversation);
 
     }
+  };
+
+  public final ConversationSummary summary;
+
+  public final Uuid id;
+  public final Uuid owner;
+  public final Time creation;
+  public final String title;
+  public final Collection<Uuid> users = new HashSet<>();
+  public Uuid firstMessage = Uuid.NULL;
+  public Uuid lastMessage = Uuid.NULL;
+
+  public Conversation(Uuid id, Uuid owner, Time creation, String title) {
+
+    this.id = id;
+    this.owner = owner;
+    this.creation = creation;
+    this.title = title;
+
+    this.summary = new ConversationSummary(id, owner, creation, title);
+
+  }
+
+  /**
+  * @param a, b The conversations that are compared to each other
+  * @return true if the fields of the conversations are identical, otherwise false
+  */
+  public static boolean equals(Conversation a, Conversation b){
+    //Checking the conversation summary for equality checks all other fields
+    return a.users.equals(b.users) && ConversationSummary.equals(a.summary, b.summary);
+  }
+
+  /**
+  * @brief Formerly the overridden Serializer write
+  */
+  public static void toStream(OutputStream out, Conversation value) throws IOException{
+      Uuid.SERIALIZER.write(out, value.id);
+      Uuid.SERIALIZER.write(out, value.owner);
+      Time.SERIALIZER.write(out, value.creation);
+      Serializers.STRING.write(out, value.title);
+      Serializers.collection(Uuid.SERIALIZER).write(out, value.users);
+      Uuid.SERIALIZER.write(out, value.firstMessage);
+      Uuid.SERIALIZER.write(out, value.lastMessage);
+  }
+
+  /**
+  * @brief Formerly the overridden Serializer read
+  */
+  public static Conversation fromStream(InputStream in) throws IOException {
+
+      final Conversation value = new Conversation(
+          Uuid.SERIALIZER.read(in),
+          Uuid.SERIALIZER.read(in),
+          Time.SERIALIZER.read(in),
+          Serializers.STRING.read(in)
+      );
+
+      value.users.addAll(Serializers.collection(Uuid.SERIALIZER).read(in));
+
+      value.firstMessage = Uuid.SERIALIZER.read(in);
+      value.lastMessage = Uuid.SERIALIZER.read(in);
+
+      return value;
+
+  }
 }

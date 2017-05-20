@@ -187,7 +187,7 @@ public final class Chat {
 
       System.out.format("Command not recognized: %s\n", token);
       System.out.format("Command line rejected: %s%s\n", token,
-          (tokenScanner.hasNext()) ? tokenScanner.nextLine() : "");
+          (tokenScanner.hasNext()) ? tokenScanner.next() : "");
       System.out.println("Type \"help\" for help.");
     }
     tokenScanner.close();

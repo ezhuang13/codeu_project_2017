@@ -15,6 +15,8 @@
 package codeu.chat.server;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 import codeu.chat.common.BasicController;
 import codeu.chat.common.Conversation;
@@ -26,6 +28,9 @@ import codeu.chat.util.Time;
 import codeu.chat.util.Uuid;
 import codeu.chat.server.authentication.Authentication;
 import codeu.chat.authentication.AuthenticationCode;
+import codeu.chat.server.storage.Storage;
+import codeu.chat.server.storage.ConversationData;
+import codeu.chat.server.storage.MessageData;
 
 public final class Controller implements RawController, BasicController {
 
@@ -35,17 +40,25 @@ public final class Controller implements RawController, BasicController {
   private final Uuid.Generator uuidGenerator;
 
   private final Authentication authentication;
+  private final Storage storage;
+  //Maps the UUID of a conversation to its unique ID
+  private HashMap<Uuid, Integer> conversationIds = new HashMap<Uuid, Integer>();
+  //Maps the UUID of a user to its unique username
+  private HashMap<Uuid, String> userIds = new HashMap<Uuid, String>();
 
-  public Controller(Uuid serverId, Model model, Authentication authentication) {
+  public Controller(Uuid serverId, Model model, Authentication authentication, Storage storage) {
     this.model = model;
     this.uuidGenerator = new RandomUuidGenerator(serverId, System.currentTimeMillis());
     this.authentication = authentication;
+    this.storage = storage;
   }
 
   @Override
   public Message newMessage(Uuid author, Uuid token, Uuid conversation, String body) {
     if (!checkToken(author, token)) return null;
-    return newMessage(createId(), author, conversation, body, Time.now());
+    Time creationTime = Time.now();
+    storage.addMessage(conversationIds.get(conversation), creationTime.inMs(), body);
+    return newMessage(createId(), author, conversation, body, creationTime);
   }
 
   @Override
@@ -55,13 +68,19 @@ public final class Controller implements RawController, BasicController {
 
   @Override
   public User login(String username, String password) {
-    return login(createId(), username, password, Time.now());
+    Uuid id = createId();
+    userIds.put(id, username);
+    return login(id, username, password, Time.now());
   }
 
   @Override
   public Conversation newConversation(String title, Uuid owner, Uuid token) {
     if (!checkToken(owner, token)) return null;
-    return newConversation(createId(), title, owner, Time.now());
+    Uuid id = createId();
+    Time creationTime = Time.now();
+    int convoID = storage.addConversation(userIds.get(owner), creationTime.inMs(), title);
+    conversationIds.put(id, convoID);
+    return newConversation(id, title, owner, creationTime);
   }
 
   @Override
@@ -109,6 +128,9 @@ public final class Controller implements RawController, BasicController {
         foundConversation.users.add(foundUser.id);
       }
     }
+    else{
+      LOG.info("Failed to add message");
+    }
 
     return message;
   }
@@ -150,6 +172,26 @@ public final class Controller implements RawController, BasicController {
           username,
           creationTime,
           result);
+    }
+
+    //Loads in all of the user's conversations
+    ArrayList<ConversationData> conversations = storage.loadConversations(username);
+    for (ConversationData c: conversations){
+      Uuid convoId = createId();
+      Conversation currentConvo = newConversation(convoId, c.getTitle(), id, c.getCreation());
+      if (currentConvo != null){
+        //Maps the UUID of the created conversation to its database ID
+        conversationIds.put(convoId, c.getId());
+        //Loads in all of the conversation's messages
+        for (MessageData m: c.getMessages()){
+          Message currentMessage = newMessage(createId(), id, convoId, m.getContent(), m.getCreation());
+          if (currentMessage == null)
+            LOG.info("Failed to load in a message");
+        }
+
+      }
+      else
+        LOG.info("Failed to load in a conversation");
     }
 
     return user;

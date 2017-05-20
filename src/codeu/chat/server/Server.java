@@ -40,6 +40,7 @@ import codeu.chat.util.*;
 import codeu.chat.util.connections.Connection;
 
 import codeu.chat.server.authentication.Authentication;
+import codeu.chat.server.storage.Storage;
 
 public final class Server {
 
@@ -67,6 +68,8 @@ public final class Server {
   private PrivateKey privateKey;
   public PublicKey publicKey;
 
+  private final Storage storage;
+
   public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database, final KeyPair keyPair) {
 
     this.id = id;
@@ -75,8 +78,10 @@ public final class Server {
     // Set up the authentication manager.
     this.database = database;
     this.authentication = new Authentication(database);
+    //Set up storage manager
+    this.storage = new Storage(database);
 
-    this.controller = new Controller(id, model, authentication);
+    this.controller = new Controller(id, model, authentication, storage);
     this.relay = relay;
 
     this.privateKey = keyPair.getPrivate();
@@ -90,7 +95,7 @@ public final class Server {
       public void run() {
         try {
 
-          LOG.info("Reading update from relay...");
+          LOG.verbose("Reading update from relay...");
 
           for (final Relay.Bundle bundle : relay.read(id, secret, lastSeen, 32)) {
             onBundle(bundle);
@@ -114,13 +119,13 @@ public final class Server {
       public void run() {
         try {
 
-          LOG.info("Handling connection...");
+          LOG.verbose("Handling connection...");
 
           final boolean success = onMessage(
               connection.in(),
               connection.out());
 
-          LOG.info("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
+          LOG.verbose("Connection handled: %s", success ? "ACCEPTED" : "REJECTED");
         } catch (Exception ex) {
 
           LOG.error(ex, "Exception while handling connection.");
@@ -148,8 +153,6 @@ public final class Server {
       final String content = Serializers.readStringEnc(in, getServerPrivateKey());
 
       final Message message = controller.newMessage(author, token, conversation, content);
-
-      //Should encryption/compression occur here? When writing after creation of message?
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_MESSAGE_RESPONSE);
       Serializers.nullable(Message.SERIALIZER).write(out, message);
