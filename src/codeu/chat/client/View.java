@@ -27,10 +27,7 @@ import codeu.chat.common.LogicalView;
 import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.User;
-import codeu.chat.util.Logger;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
 
@@ -290,9 +287,7 @@ public final class View implements BasicView, LogicalView{
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_SERVER_PUBLIC_KEY);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_SERVER_PUBLIC_KEY) {
-        KeyFactory keyFactory = KeyFactory.getInstance(Serializers.STRING.read(connection.in()));
-        byte[] keyBytes = Serializers.BYTES.read(connection.in());
-        return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
+        return Encryptor.KEY.read(connection.in());
       } else {
         LOG.error("Response from client setup failed.");
       }
@@ -300,6 +295,7 @@ public final class View implements BasicView, LogicalView{
     } catch (Exception ex) {
       System.out.println("ERROR: Exception during client setup. Check log for details.");
       LOG.error(ex, "Exception during client setup.");
+
     }
 
     return null;

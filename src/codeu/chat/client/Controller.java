@@ -24,10 +24,7 @@ import codeu.chat.common.Conversation;
 import codeu.chat.common.Message;
 import codeu.chat.common.NetworkCode;
 import codeu.chat.common.User;
-import codeu.chat.util.Encryptor;
-import codeu.chat.util.Logger;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 import codeu.chat.util.connections.Connection;
 import codeu.chat.util.connections.ConnectionSource;
 
@@ -57,7 +54,7 @@ public class Controller implements BasicController {
       Uuid.SERIALIZER.write(connection.out(), author);
       Uuid.SERIALIZER.write(connection.out(), token);
       Uuid.SERIALIZER.write(connection.out(), conversation);
-      Serializers.writeStringEnc(connection.out(), body, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), body, serverPublicKey);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_MESSAGE_RESPONSE) {
         response = Serializers.nullable(Message.SERIALIZER).read(connection.in());
@@ -80,8 +77,8 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_USER_REQUEST);
-      Serializers.writeStringEnc(connection.out(), username, serverPublicKey);
-      Serializers.writeStringEnc(connection.out(), password, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), username, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), password, serverPublicKey);
       LOG.info("newUser: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_USER_RESPONSE) {
@@ -106,8 +103,8 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.LOGIN_REQUEST);
-      Serializers.writeStringEnc(connection.out(), username, serverPublicKey);
-      Serializers.writeStringEnc(connection.out(), password, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), username, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), password, serverPublicKey);
       LOG.info("login: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.LOGIN_RESPONSE) {
@@ -135,7 +132,7 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_CONVERSATION_REQUEST);
-      Serializers.writeStringEnc(connection.out(), title, serverPublicKey);
+      EncryptedSerializers.STRING.write(connection.out(), title, serverPublicKey);
       Uuid.SERIALIZER.write(connection.out(), owner);
       Uuid.SERIALIZER.write(connection.out(), token);
 

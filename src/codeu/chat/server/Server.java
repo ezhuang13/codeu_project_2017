@@ -150,7 +150,7 @@ public final class Server {
       final Uuid author = Uuid.SERIALIZER.read(in);
 	  final Uuid token = Uuid.SERIALIZER.read(in);
       final Uuid conversation = Uuid.SERIALIZER.read(in);
-      final String content = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String content = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final Message message = controller.newMessage(author, token, conversation, content);
 
@@ -164,8 +164,8 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
 
-      final String username = Serializers.readStringEnc(in, getServerPrivateKey());
-      final String password = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String username = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
+      final String password = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final int result = controller.newUser(username, password);
 
@@ -174,8 +174,8 @@ public final class Server {
 
     } else if (type == NetworkCode.LOGIN_REQUEST) {
 
-      final String username = Serializers.readStringEnc(in, getServerPrivateKey());
-      final String password = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String username = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
+      final String password = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final User user = controller.login(username, password);
 
@@ -189,9 +189,9 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_CONVERSATION_REQUEST) {
 
-      final String title = Serializers.readStringEnc(in, getServerPrivateKey());
+      final String title = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
       final Uuid owner = Uuid.SERIALIZER.read(in);
-	  final Uuid token = Uuid.SERIALIZER.read(in);
+	    final Uuid token = Uuid.SERIALIZER.read(in);
 
       final Conversation conversation = controller.newConversation(title, owner, token);
 
@@ -288,8 +288,7 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_SERVER_PUBLIC_KEY) {
       Serializers.INTEGER.write(out, NetworkCode.GET_SERVER_PUBLIC_KEY);
-      Serializers.STRING.write(out, ASYMMETRIC_ALGORITHM);
-      Serializers.BYTES.write(out, publicKey.getEncoded());
+      Encryptor.KEY.write(out, getServerPublicKey());
 
     } else {
 

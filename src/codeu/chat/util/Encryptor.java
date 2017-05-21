@@ -10,8 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
 
 public class Encryptor {
+    private static final Logger.Log LOG = Logger.newLog(Encryptor.class);
+
     private static final String SYMMETRIC_ALGORITHM = "AES";
     private static final String ASYMMETRIC_ALGORITHM = "RSA";
 
@@ -20,7 +23,11 @@ public class Encryptor {
 
         try {
             keyMaker = KeyGenerator.getInstance(SYMMETRIC_ALGORITHM);
-        } catch(NoSuchAlgorithmException nsae) {return null;}
+        } catch(NoSuchAlgorithmException nsae) {
+            System.out.println("Incorrect symmetric algorithm provided.");
+            System.exit(1);
+            return null;
+        }
 
         keyMaker.init(128);
         return keyMaker.generateKey();
@@ -31,7 +38,11 @@ public class Encryptor {
 
         try {
             keyMaker = KeyPairGenerator.getInstance(ASYMMETRIC_ALGORITHM);
-        } catch(NoSuchAlgorithmException nsae) {return null;}
+        } catch(NoSuchAlgorithmException nsae) {
+            System.out.println("Incorrect asymmetric algorithm provided.");
+            System.exit(1);
+            return null;
+        }
 
         keyMaker.initialize(2048);
         return keyMaker.generateKeyPair();
@@ -47,13 +58,29 @@ public class Encryptor {
         try {
             cipher.init(Cipher.WRAP_MODE, publicKey);
         }
-        catch (InvalidKeyException iee) {System.out.println("INVALID public key."); return null;}
+        catch (InvalidKeyException iee) {
+            System.out.println("INVALID public key.");
+            iee.printStackTrace();
+            LOG.info("INVALID public key.");
+            System.exit(1);
+            return null;
+        }
 
         try {
             return cipher.wrap(keyToWrap);
         }
-        catch (InvalidKeyException iee) {System.out.println("INVALID symmetric key.");}
-        catch (IllegalBlockSizeException ibse) {System.out.println("ILLEGAL BLOCK SIZE on wrapping.");}
+        catch (InvalidKeyException iee) {
+            System.out.println("INVALID symmetric key.");
+            iee.printStackTrace();
+            LOG.info("INVALID symmetric key.");
+            System.exit(1);
+        }
+        catch (IllegalBlockSizeException ibse) {
+            System.out.println("ILLEGAL BLOCK SIZE on wrapping.");
+            ibse.printStackTrace();
+            LOG.info("ILLEGAL BLOCK SIZE on wrapping.");
+            System.exit(1);
+        }
 
         return null;
     }
@@ -63,37 +90,38 @@ public class Encryptor {
         try {
             cipher = Cipher.getInstance(ASYMMETRIC_ALGORITHM);
         }
-        catch(GeneralSecurityException gse) {return null;}
-
+        catch(GeneralSecurityException gse) {
+            System.out.println("Incorrect asymmetric algorithm provided.");
+            System.exit(1);
+            return null;
+        }
         try {
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
         }
-        catch (InvalidKeyException iee) {System.out.println("INVALID public key."); return null;}
+        catch (InvalidKeyException iee) {
+            System.out.println("INVALID public key.");
+            iee.printStackTrace();
+            LOG.info("INVALID public key.");
+            System.exit(1);
+            return null;
+        }
 
         try {
             return (SecretKey) cipher.unwrap(keyToUnwrap, SYMMETRIC_ALGORITHM, Cipher.SECRET_KEY);
         }
-        catch (InvalidKeyException iee) {System.out.println("INVALID symmetric key.");}
-        catch (GeneralSecurityException gse) {}
-
-        return null;
-    }
-
-    public static void writeKey(OutputStream out, SecretKey key, PublicKey publicKey) throws IOException {
-        byte[] value = wrap(key, publicKey);
-        Serializers.INTEGER.write(out, value.length);
-        out.write(value);
-    }
-
-    public static SecretKey readKey(InputStream input, PrivateKey privateKey) throws IOException {
-        final int length = Serializers.INTEGER.read(input);
-        final byte[] value = new byte[length];
-
-        for (int i = 0; i < length; i++) {
-            value[i] = (byte) input.read();
+        catch (InvalidKeyException iee) {
+            System.out.println("INVALID symmetric key.");
+            iee.printStackTrace();
+            LOG.info("INVALID symmetric key.");
+            System.exit(1);
+        }
+        catch (NoSuchAlgorithmException nsae) {
+            System.out.println("Incorrect symmetric algorithm provided.");
+            System.exit(1);
+            return null;
         }
 
-        return unwrap(value, privateKey);
+        return null;
     }
 
     /**
@@ -108,12 +136,23 @@ public class Encryptor {
             cipher.init(Cipher.ENCRYPT_MODE, key);
             return cipher.doFinal(input);
         }
-        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
-        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
-        catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
-        catch (GeneralSecurityException gse) {}
+        catch (InvalidKeyException iee) {
+            System.out.println("INVALID symmetric key.");
+            iee.printStackTrace();
+            LOG.info("INVALID symmetric key.");
+            System.exit(1);
+        }
+        catch (IllegalBlockSizeException ibse) {
+            System.out.print("ILLEGAL BLOCK SIZE");
+        }
+        catch (BadPaddingException bpe) {
+            System.out.print("BAD PADDING");
+        }
+        catch (GeneralSecurityException gse) {
 
-        System.out.println(" on decryption.");
+        }
+
+        System.out.println(" on encryption.");
         return null;
     }
 
@@ -129,13 +168,47 @@ public class Encryptor {
             cipher.init(Cipher.DECRYPT_MODE, key);
             return cipher.doFinal(input);
         }
-        catch (InvalidKeyException iee) {System.out.print("INVALID KEY");}
-        catch (IllegalBlockSizeException ibse) {System.out.print("ILLEGAL BLOCK SIZE");}
-        catch (BadPaddingException bpe) {System.out.print("BAD PADDING");}
-        catch (GeneralSecurityException gse) {}
+        catch (IllegalBlockSizeException ibse) {
+            System.out.println("ILLEGAL BLOCK SIZE on wrapping.");
+            ibse.printStackTrace();
+            LOG.info("ILLEGAL BLOCK SIZE on wrapping.");
+            System.exit(1);
+        }
+        catch (GeneralSecurityException gse) {
+            System.out.println("INVALID symmetric key.");
+            gse.printStackTrace();
+            LOG.info("INVALID symmetric key.");
+            System.exit(1);
+        }
 
         System.out.println(" on decryption.");
         return null;
     }
+
+    public static final Serializer<PublicKey> KEY = new Serializer<PublicKey>() {
+
+        @Override
+        public void write(OutputStream out, PublicKey value) throws IOException {
+          Serializers.STRING.write(out, ASYMMETRIC_ALGORITHM);
+          Serializers.BYTES.write(out, value.getEncoded());
+        }
+
+        @Override
+        public PublicKey read(InputStream in) throws IOException {
+            try {
+                KeyFactory keyFactory = KeyFactory.getInstance(Serializers.STRING.read(in));
+                byte[] keyBytes = Serializers.BYTES.read(in);
+                return keyFactory.generatePublic(new X509EncodedKeySpec(keyBytes));
+            }
+            catch (GeneralSecurityException gse) {
+                System.out.println("INVALID key.");
+                gse.printStackTrace();
+                LOG.info("Key transferred incorrectly.");
+                System.exit(1);
+            }
+
+            return null;
+        }
+    };
 }
 
