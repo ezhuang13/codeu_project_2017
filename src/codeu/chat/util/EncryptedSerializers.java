@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public final class EncryptedSerializers {
 
@@ -52,5 +54,53 @@ public final class EncryptedSerializers {
       return new String(BYTES.read(input, privateKey), _ENCODING);
     }
   };
+
+  public static <T> EncryptedSerializer<Collection<T>> collection(final EncryptedSerializer<T> serializer) {
+
+    return new EncryptedSerializer<Collection<T>>() {
+
+      @Override
+      public void write(OutputStream out, Collection<T> value, PublicKey key) throws IOException {
+        Serializers.INTEGER.write(out, value.size());
+        for (final T x : value) {
+          serializer.write(out, x, key);
+        }
+      }
+
+      @Override
+      public Collection<T> read(InputStream in, PrivateKey key) throws IOException {
+        final int size = Serializers.INTEGER.read(in);
+        Collection<T> list = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+          list.add(serializer.read(in, key));
+        }
+        return list;
+      }
+    };
+  }
+
+  public static <T> EncryptedSerializer<T> nullable(final EncryptedSerializer<T> serializer) {
+
+    final int NO_VALUE = 0x00;
+    final int YES_VALUE = 0xFF;
+
+    return new EncryptedSerializer<T>() {
+
+      @Override
+      public void write(OutputStream out, T value, PublicKey key) throws IOException {
+        if (value == null) {
+          out.write(NO_VALUE);
+        } else {
+          out.write(YES_VALUE);
+          serializer.write(out, value, key);
+        }
+      }
+
+      @Override
+      public T read(InputStream in, PrivateKey key) throws IOException {
+        return in.read() == NO_VALUE ? null : serializer.read(in, key);
+      }
+    };
+  }
 }
 

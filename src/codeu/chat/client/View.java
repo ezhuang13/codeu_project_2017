@@ -15,6 +15,8 @@
 package codeu.chat.client;
 
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
@@ -42,8 +44,13 @@ public final class View implements BasicView, LogicalView{
 
   private final ConnectionSource source;
 
-  public View(ConnectionSource source) {
+  public final PublicKey publicKey;
+  private final PrivateKey privateKey;
+
+  public View(ConnectionSource source, KeyPair keyPair) {
     this.source = source;
+    this.publicKey = keyPair.getPublic();
+    this.privateKey = keyPair.getPrivate();
   }
 
   @Override
@@ -54,10 +61,11 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_USERS_BY_ID_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_USERS_BY_ID_RESPONSE) {
-        users.addAll(Serializers.collection(User.SERIALIZER).read(connection.in()));
+        users.addAll(EncryptedSerializers.collection(User.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -78,9 +86,10 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_ALL_CONVERSATIONS_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_ALL_CONVERSATIONS_RESPONSE) {
-        summaries.addAll(Serializers.collection(ConversationSummary.SERIALIZER).read(connection.in()));
+        summaries.addAll(EncryptedSerializers.collection(ConversationSummary.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -101,10 +110,11 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_CONVERSATIONS_BY_ID_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE) {
-        conversations.addAll(Serializers.collection(Conversation.SERIALIZER).read(connection.in()));
+        conversations.addAll(EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -124,10 +134,12 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_MESSAGES_BY_ID_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE) {
-        messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
+      // error here?
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_MESSAGES_BY_ID_RESPONSE) {
+        messages.addAll(EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -169,10 +181,11 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_USERS_EXCLUDING_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Serializers.collection(Uuid.SERIALIZER).write(connection.out(), ids);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_USERS_EXCLUDING_RESPONSE) {
-        users.addAll(Serializers.collection(User.SERIALIZER).read(connection.in()));
+        users.addAll(EncryptedSerializers.collection(User.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -192,11 +205,12 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_CONVERSATIONS_BY_TIME_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Time.SERIALIZER.write(connection.out(), start);
       Time.SERIALIZER.write(connection.out(), end);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_CONVERSATIONS_BY_TIME_RESPONSE) {
-        conversations.addAll(Serializers.collection(Conversation.SERIALIZER).read(connection.in()));
+        conversations.addAll(EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -216,10 +230,11 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_CONVERSATIONS_BY_TITLE_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Serializers.STRING.write(connection.out(), filter);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_CONVERSATIONS_BY_TITLE_RESPONSE) {
-        conversations.addAll(Serializers.collection(Conversation.SERIALIZER).read(connection.in()));
+        conversations.addAll(EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -239,11 +254,12 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_MESSAGES_BY_TIME_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Time.SERIALIZER.write(connection.out(), start);
       Time.SERIALIZER.write(connection.out(), end);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_MESSAGES_BY_TIME_RESPONSE) {
-        messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
+        messages.addAll(EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -264,11 +280,12 @@ public final class View implements BasicView, LogicalView{
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.GET_MESSAGES_BY_RANGE_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Uuid.SERIALIZER.write(connection.out(), rootMessage);
       Serializers.INTEGER.write(connection.out(), range);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_MESSAGES_BY_RANGE_RESPONSE) {
-        messages.addAll(Serializers.collection(Message.SERIALIZER).read(connection.in()));
+        messages.addAll(EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey));
       } else {
         LOG.error("Response from server failed.");
       }
@@ -284,10 +301,10 @@ public final class View implements BasicView, LogicalView{
   public PublicKey getServerPublicKey() {
     try (final Connection connection = source.connect()) {
 
-      Serializers.INTEGER.write(connection.out(), NetworkCode.GET_SERVER_PUBLIC_KEY);
+      Serializers.INTEGER.write(connection.out(), NetworkCode.SERVER_PUBLIC_KEY_REQUEST);
 
-      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.GET_SERVER_PUBLIC_KEY) {
-        return Encryptor.KEY.read(connection.in());
+      if (Serializers.INTEGER.read(connection.in()) == NetworkCode.SERVER_PUBLIC_KEY_RESPONSE) {
+        return Encryptor.SERIALIZER.read(connection.in());
       } else {
         LOG.error("Response from client setup failed.");
       }

@@ -17,6 +17,8 @@ package codeu.chat.client;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import codeu.chat.common.BasicController;
@@ -36,11 +38,16 @@ public class Controller implements BasicController {
 
   private final ConnectionSource source;
 
+  public final PublicKey publicKey;
+  private final PrivateKey privateKey;
+
   private PublicKey serverPublicKey;
 
-  public Controller(ConnectionSource source, PublicKey key) {
+  public Controller(ConnectionSource source, KeyPair keyPair, PublicKey serverKey) {
     this.source = source;
-    this.serverPublicKey = key;
+    this.publicKey = keyPair.getPublic();
+    this.privateKey = keyPair.getPrivate();
+    this.serverPublicKey = serverKey;
   }
 
   @Override
@@ -51,13 +58,14 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_MESSAGE_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       Uuid.SERIALIZER.write(connection.out(), author);
       Uuid.SERIALIZER.write(connection.out(), token);
       Uuid.SERIALIZER.write(connection.out(), conversation);
       EncryptedSerializers.STRING.write(connection.out(), body, serverPublicKey);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_MESSAGE_RESPONSE) {
-        response = Serializers.nullable(Message.SERIALIZER).read(connection.in());
+        response = EncryptedSerializers.nullable(Message.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey);
       } else {
         LOG.error("Response from server failed.");
       }
@@ -103,12 +111,13 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.LOGIN_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       EncryptedSerializers.STRING.write(connection.out(), username, serverPublicKey);
       EncryptedSerializers.STRING.write(connection.out(), password, serverPublicKey);
       LOG.info("login: Request completed.");
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.LOGIN_RESPONSE) {
-        user = Serializers.nullable(User.SERIALIZER).read(connection.in());
+        user = EncryptedSerializers.nullable(User.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey);
         Uuid token = Serializers.nullable(Uuid.SERIALIZER).read(connection.in());
         user.token = token;
         LOG.info("login: Response completed.");
@@ -132,12 +141,13 @@ public class Controller implements BasicController {
     try (final Connection connection = source.connect()) {
 
       Serializers.INTEGER.write(connection.out(), NetworkCode.NEW_CONVERSATION_REQUEST);
+      Encryptor.SERIALIZER.write(connection.out(), publicKey);
       EncryptedSerializers.STRING.write(connection.out(), title, serverPublicKey);
       Uuid.SERIALIZER.write(connection.out(), owner);
       Uuid.SERIALIZER.write(connection.out(), token);
 
       if (Serializers.INTEGER.read(connection.in()) == NetworkCode.NEW_CONVERSATION_RESPONSE) {
-        response = Serializers.nullable(Conversation.SERIALIZER).read(connection.in());
+        response = EncryptedSerializers.nullable(Conversation.ENCRYPTED_SERIALIZER).read(connection.in(), privateKey);
       } else {
         LOG.error("Response from server failed.");
       }

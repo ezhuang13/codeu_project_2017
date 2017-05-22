@@ -185,7 +185,7 @@ public class Encryptor {
         return null;
     }
 
-    public static final Serializer<PublicKey> KEY = new Serializer<PublicKey>() {
+    public static final Serializer<PublicKey> SERIALIZER = new Serializer<PublicKey>() {
 
         @Override
         public void write(OutputStream out, PublicKey value) throws IOException {

@@ -19,13 +19,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 
 public final class ConversationSummary implements ListViewable {
 
@@ -77,6 +74,25 @@ public final class ConversationSummary implements ListViewable {
     public ConversationSummary read(InputStream in) throws IOException {
 
       byte[] conversationSummary = Serializers.BYTES.read(in);
+      return CONVERSATION_SUMMARY.decompress(conversationSummary);
+
+    }
+  };
+
+  public static final EncryptedSerializer<ConversationSummary> ENCRYPTED_SERIALIZER = new EncryptedSerializer<ConversationSummary>() {
+
+    @Override
+    public void write(OutputStream out, ConversationSummary value, PublicKey key) throws IOException {
+
+      byte[] conversationSummary = CONVERSATION_SUMMARY.compress(value);
+      EncryptedSerializers.BYTES.write(out, conversationSummary, key);
+
+    }
+
+    @Override
+    public ConversationSummary read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] conversationSummary = EncryptedSerializers.BYTES.read(in, key);
       return CONVERSATION_SUMMARY.decompress(conversationSummary);
 
     }

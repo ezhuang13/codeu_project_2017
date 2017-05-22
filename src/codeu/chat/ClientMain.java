@@ -15,11 +15,13 @@
 package codeu.chat;
 
 import java.io.IOException;
+import java.security.KeyPair;
 import java.util.Scanner;
 
 import codeu.chat.client.commandline.Chat;
 import codeu.chat.client.Controller;
 import codeu.chat.client.View;
+import codeu.chat.util.Encryptor;
 import codeu.chat.util.Logger;
 import codeu.chat.util.RemoteAddress;
 import codeu.chat.util.connections.ClientConnectionSource;
@@ -45,8 +47,11 @@ final class ClientMain {
 
     final ConnectionSource source = new ClientConnectionSource(address.host, address.port);
 
-    final View view = new View(source);
-    final Controller controller = new Controller(source, view.getServerPublicKey());
+    // Public/private key pair for this client.
+    final KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
+
+    final View view = new View(source, keyPair);
+    final Controller controller = new Controller(source, keyPair, view.getServerPublicKey());
 
     LOG.info("Creating client...");
     final Chat chat = new Chat(controller, view);

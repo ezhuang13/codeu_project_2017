@@ -19,13 +19,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Uuid;
-import codeu.chat.util.Time;
+import codeu.chat.util.*;
 
 
 public final class Message {
@@ -81,6 +78,31 @@ public final class Message {
     public Message read(InputStream in) throws IOException {
 
       byte[] message = Serializers.BYTES.read(in);
+      return MESSAGE.decompress(message);
+
+    }
+  };
+
+  public static final EncryptedSerializer<Message> ENCRYPTED_SERIALIZER = new EncryptedSerializer<Message>() {
+
+    /**
+     * @description Sends to outputstream a message represented as a compressed byte[]
+     */
+    @Override
+    public void write(OutputStream out, Message value, PublicKey key) throws IOException {
+
+      byte[] message = MESSAGE.compress(value);
+      EncryptedSerializers.BYTES.write(out, message, key);
+
+    }
+
+    /**
+     * @description Deserializes compressed byte[] and then decompresses to original message
+     */
+    @Override
+    public Message read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] message = EncryptedSerializers.BYTES.read(in, key);
       return MESSAGE.decompress(message);
 
     }
