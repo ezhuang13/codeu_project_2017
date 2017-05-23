@@ -298,6 +298,11 @@ public final class View implements BasicView, LogicalView{
     return messages;
   }
 
+  /**
+   * getServerPublicKey
+   * Allows easy access to the Server's public key.
+   * @return Server's public key
+   */
   public PublicKey getServerPublicKey() {
     try (final Connection connection = source.connect()) {
 

@@ -21,6 +21,10 @@ import java.io.OutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
+/**
+ * This class allows for encryption and then serialization.
+ * @param <T> the type
+ */
 public interface EncryptedSerializer<T> {
 
   void write(OutputStream out, T value, PublicKey publicKey) throws IOException;
