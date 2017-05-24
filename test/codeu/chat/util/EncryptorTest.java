@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package codeu.chat.util;
+
 import static org.junit.Assert.*;
 
 import codeu.chat.common.Secret;
@@ -20,13 +22,11 @@ import org.junit.Before;
 
 import codeu.chat.util.Encryptor;
 
-import javax.crypto.BadPaddingException;
+import java.util.Arrays;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.SecretKey;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 
 public final class EncryptorTest {
@@ -45,7 +45,7 @@ public final class EncryptorTest {
     cipher.init(Cipher.ENCRYPT_MODE, key);
     String text2 = new String(cipher.doFinal(plaintext.getBytes(_ENCODING)), _ENCODING);
 
-    assertTrue(text1 == text2);
+    assertTrue(text1.equals(text2));
   }
 
   @Test
@@ -60,20 +60,21 @@ public final class EncryptorTest {
     cipher.init(Cipher.DECRYPT_MODE, key);
     String text2 = new String(cipher.doFinal(ciphertext), _ENCODING);
 
-    assertTrue(plaintext == text1 && text1 == text2);
+    assertTrue(plaintext.equals(text1) && text1.equals(text2));
   }
 
   @Test
-  public void testWrap() throws GeneralSecurityException {
+  public void testWrap() throws GeneralSecurityException, UnsupportedEncodingException {
     SecretKey key = Encryptor.makeSymmetricKey();
     KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
-    byte[] wrapped1 = Encryptor.wrap(key, keyPair.getPublic());
+
+    SecretKey key1 = Encryptor.unwrap(Encryptor.wrap(key, keyPair.getPublic()), keyPair.getPrivate());
 
     Cipher cipher = Cipher.getInstance(ASYMMETRIC_ALGORITHM);
     cipher.init(Cipher.WRAP_MODE, keyPair.getPublic());
-    byte[] wrapped2 = cipher.wrap(key.getEncoded());
+    SecretKey key2 = Encryptor.unwrap(cipher.wrap(key), keyPair.getPrivate());
 
-    assertTrue(wrapped1 == wrapped2);
+    assertTrue(key1.equals(key2));
   }
 
   @Test
@@ -85,7 +86,7 @@ public final class EncryptorTest {
     SecretKey key1 = Encryptor.unwrap(wrapped, keyPair.getPrivate());
 
     Cipher cipher = Cipher.getInstance(ASYMMETRIC_ALGORITHM);
-    cipher.init(Cipher.UNWRAP_MODE, keyPair.getPublic());
+    cipher.init(Cipher.UNWRAP_MODE, keyPair.getPrivate());
     SecretKey key2 = (SecretKey) cipher.unwrap(wrapped, SYMMETRIC_ALGORITHM, Cipher.SECRET_KEY);
 
     assertTrue(key1.equals(key2));
