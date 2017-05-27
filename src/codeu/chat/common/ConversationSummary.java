@@ -19,13 +19,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 
 public final class ConversationSummary implements ListViewable {
 
@@ -34,15 +31,15 @@ public final class ConversationSummary implements ListViewable {
     @Override
     public byte[] compress(ConversationSummary data){
 
-        ByteArrayOutputStream convoSummaryStream = new ByteArrayOutputStream();
-        try{
-          toStream(convoSummaryStream, data);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        byte[] byteConvoSummary = convoSummaryStream.toByteArray();
+      ByteArrayOutputStream convoSummaryStream = new ByteArrayOutputStream();
+      try{
+        toStream(convoSummaryStream, data);
+      }catch (IOException e){
+        e.printStackTrace();
+      }
+      byte[] byteConvoSummary = convoSummaryStream.toByteArray();
 
-        return Compressions.BYTES.compress(byteConvoSummary);
+      return Compressions.BYTES.compress(byteConvoSummary);
 
     }
 
@@ -57,7 +54,7 @@ public final class ConversationSummary implements ListViewable {
       try {
         convoSummary = fromStream(byteConvoSummary);
       }catch (IOException e){
-          e.printStackTrace();
+        e.printStackTrace();
       }
       return convoSummary;
     }
@@ -82,6 +79,25 @@ public final class ConversationSummary implements ListViewable {
     }
   };
 
+  public static final EncryptedSerializer<ConversationSummary> ENCRYPTED_SERIALIZER = new EncryptedSerializer<ConversationSummary>() {
+
+    @Override
+    public void write(OutputStream out, ConversationSummary value, PublicKey key) throws IOException {
+
+      byte[] conversationSummary = CONVERSATION_SUMMARY.compress(value);
+      EncryptedSerializers.BYTES.write(out, conversationSummary, key);
+
+    }
+
+    @Override
+    public ConversationSummary read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] conversationSummary = EncryptedSerializers.BYTES.read(in, key);
+      return CONVERSATION_SUMMARY.decompress(conversationSummary);
+
+    }
+  };
+
   public final Uuid id;
   public final Uuid owner;
   public final Time creation;
@@ -97,12 +113,12 @@ public final class ConversationSummary implements ListViewable {
   }
 
   /**
-  * @param a, b The summaries that are compared to each other
-  * @return true if the fields of the summaries are identical, otherwise false
-  */
+   * @param a, b The summaries that are compared to each other
+   * @return true if the fields of the summaries are identical, otherwise false
+   */
   public static boolean equals(ConversationSummary a, ConversationSummary b){
-    return a.title.equals(b.title) && a.creation.compareTo(b.creation) == 0 && Uuid.equals(a.id, b.id) 
-    && Uuid.equals(a.owner, b.owner);
+    return a.title.equals(b.title) && a.creation.compareTo(b.creation) == 0 && Uuid.equals(a.id, b.id)
+        && Uuid.equals(a.owner, b.owner);
   }
 
   // How this object should appear in a user-viewable list
@@ -112,28 +128,28 @@ public final class ConversationSummary implements ListViewable {
   }
 
   /**
-  * @brief Formerly the overridden Serializer write
-  */
+   * @brief Formerly the overridden Serializer write
+   */
   public static void toStream(OutputStream out, ConversationSummary value) throws IOException{
 
-      Uuid.SERIALIZER.write(out, value.id);
-      Uuid.SERIALIZER.write(out, value.owner);
-      Time.SERIALIZER.write(out, value.creation);
-      Serializers.STRING.write(out, value.title);
+    Uuid.SERIALIZER.write(out, value.id);
+    Uuid.SERIALIZER.write(out, value.owner);
+    Time.SERIALIZER.write(out, value.creation);
+    Serializers.STRING.write(out, value.title);
 
   }
 
   /**
-  * @brief Formerly the overridden Serializer read
-  */
+   * @brief Formerly the overridden Serializer read
+   */
   public static ConversationSummary fromStream(InputStream in) throws IOException {
 
-      return new ConversationSummary(
-          Uuid.SERIALIZER.read(in),
-          Uuid.SERIALIZER.read(in),
-          Time.SERIALIZER.read(in),
-          Serializers.STRING.read(in)
-      );
+    return new ConversationSummary(
+        Uuid.SERIALIZER.read(in),
+        Uuid.SERIALIZER.read(in),
+        Time.SERIALIZER.read(in),
+        Serializers.STRING.read(in)
+    );
 
   }
 }

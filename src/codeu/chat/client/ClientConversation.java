@@ -146,7 +146,7 @@ public final class ClientConversation {
   }
 
   public int conversationsCount() {
-   return summariesByUuid.size();
+    return summariesByUuid.size();
   }
 
   public Iterable<ConversationSummary> getConversationSummaries() {
