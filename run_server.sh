@@ -42,17 +42,17 @@ if [[ "$TEAM_ID" == "" || "$TEAM_SECRET" == "" || "$PORT" == "" || "$PERSISTENT_
 fi
 
 
-if [ "$RELAY_ADDRESS" == "" ] ; then
+#if [ "$RELAY_ADDRESS" == "" ] ; then
   java -cp $cp codeu.chat.ServerMain \
       "$TEAM_ID" \
       "$TEAM_SECRET" \
       "$PORT" \
       "$PERSISTENT_DIR"
-else
-  java -cp $cp codeu.chat.ServerMain \
-      "$TEAM_ID" \
-      "$TEAM_SECRET" \
-      "$PORT" \
-      "$PERSISTENT_DIR" \
-      "$RELAY_ADDRESS"
-fi
+#else
+#  java -cp $cp codeu.chat.ServerMain \
+#      "$TEAM_ID" \
+#      "$TEAM_SECRET" \
+#      "$PORT" \
+#      "$PERSISTENT_DIR" \
+#      "$RELAY_ADDRESS"
+#fi
