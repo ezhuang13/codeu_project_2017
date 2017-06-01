@@ -19,6 +19,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.Collection;
+import java.util.HashSet;
+
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -45,7 +51,7 @@ public final class Conversation {
 
         return Compressions.BYTES.compress(byteConvo);
     }
-
+    
     @Override
     public Conversation decompress(byte[] data){
 
@@ -63,8 +69,8 @@ public final class Conversation {
     }
 
   };
-
-  public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
+  
+public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
 
     @Override
     public void write(OutputStream out, Conversation value) throws IOException {
@@ -78,6 +84,25 @@ public final class Conversation {
     public Conversation read(InputStream in) throws IOException {
 
       byte[] conversation = Serializers.BYTES.read(in);
+      return CONVERSATION.decompress(conversation);
+
+    }
+  };
+
+  public static final EncryptedSerializer<Conversation> ENCRYPTED_SERIALIZER = new EncryptedSerializer<Conversation>() {
+
+    @Override
+    public void write(OutputStream out, Conversation value, PublicKey key) throws IOException {
+
+      byte[] conversation = CONVERSATION.compress(value);
+      EncryptedSerializers.BYTES.write(out, conversation, key);
+
+    }
+
+    @Override
+    public Conversation read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] conversation = EncryptedSerializers.BYTES.read(in, key);
       return CONVERSATION.decompress(conversation);
 
     }

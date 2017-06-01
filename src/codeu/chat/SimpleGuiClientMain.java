@@ -15,10 +15,12 @@
 package codeu.chat;
 
 import java.io.IOException;
+import java.security.KeyPair;
 
 import codeu.chat.client.Controller;
 import codeu.chat.client.simplegui.ChatSimpleGui;
 import codeu.chat.client.View;
+import codeu.chat.util.Encryptor;
 import codeu.chat.util.Logger;
 import codeu.chat.util.RemoteAddress;
 import codeu.chat.util.connections.ClientConnectionSource;
@@ -47,8 +49,12 @@ final class SimpleGuiClientMain {
     try (
       final ConnectionSource source = new ClientConnectionSource(address.host, address.port)
     ) {
-      final Controller controller = new Controller(source);
-      final View view = new View(source);
+
+      // Public/private key pair for this client.
+      final KeyPair keyPair = Encryptor.makeAsymmetricKeyPair();
+
+      final View view = new View(source, keyPair);
+      final Controller controller = new Controller(source, keyPair, view.getServerPublicKey());
 
       LOG.info("Creating client...");
 

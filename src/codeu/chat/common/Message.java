@@ -20,13 +20,15 @@ import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
 import codeu.chat.util.Serializer;
 import codeu.chat.util.Serializers;
 import codeu.chat.util.Compression;
 import codeu.chat.util.Compressions;
 import codeu.chat.util.Uuid;
 import codeu.chat.util.Time;
-
 
 public final class Message {
 
@@ -64,8 +66,8 @@ public final class Message {
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
 
     /**
-    * @description Sends to outputstream a message represented as a compressed byte[]
-    */
+     * @description Sends to outputstream a message represented as a compressed byte[]
+     */
     @Override
     public void write(OutputStream out, Message value) throws IOException {
 
@@ -75,14 +77,38 @@ public final class Message {
     }
 
     /**
-    * @description Deserializes compressed byte[] and then decompresses to original message
-    */
+     * @description Deserializes compressed byte[] and then decompresses to original message
+     */
     @Override
     public Message read(InputStream in) throws IOException {
 
       byte[] message = Serializers.BYTES.read(in);
       return MESSAGE.decompress(message);
 
+    }
+  };
+
+  public static final EncryptedSerializer<Message> ENCRYPTED_SERIALIZER = new EncryptedSerializer<Message>() {
+
+    /**
+     * @description Sends to outputstream a message represented as a compressed byte[]
+     */
+    @Override
+    public void write(OutputStream out, Message value, PublicKey key) throws IOException {
+
+      byte[] message = MESSAGE.compress(value);
+      EncryptedSerializers.BYTES.write(out, message, key);
+
+    }
+
+    /**
+     * @description Deserializes compressed byte[] and then decompresses to original message
+     */
+    @Override
+    public Message read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] message = EncryptedSerializers.BYTES.read(in, key);
+      return MESSAGE.decompress(message);
     }
   };
 
@@ -105,20 +131,20 @@ public final class Message {
   }
 
   /**
-  * @param a, b The messages that are compared to each other
-  * @return true if the fields of the messages are identical, otherwise false
-  */
+   * @param a, b The messages that are compared to each other
+   * @return true if the fields of the messages are identical, otherwise false
+   */
   public static boolean equals(Message a, Message b){
     //Only check the next field of Uuids, because this performs a deep check and
     //we assume cur and prev are linked
     return a.content.equals(b.content) && a.creation.compareTo(b.creation) == 0
-    && Uuid.equals(a.author, b.author) && Uuid.equals(a.next, b.next);
+        && Uuid.equals(a.author, b.author) && Uuid.equals(a.next, b.next);
   }
 
 
   /**
-  * @brief Formerly the overridden Serializer write
-  */
+   * @brief Formerly the overridden Serializer write
+   */
   public static void toStream(OutputStream out, Message value) throws IOException {
 
     Uuid.SERIALIZER.write(out, value.id);
@@ -130,8 +156,8 @@ public final class Message {
   }
 
   /**
-  * @brief Formerly the overridden Serializer read
-  */
+   * @brief Formerly the overridden Serializer read
+   */
   public static Message fromStream(InputStream in) throws IOException {
 
     return new Message(
@@ -143,4 +169,5 @@ public final class Message {
         Serializers.STRING.read(in)
     );
   }
+
 }

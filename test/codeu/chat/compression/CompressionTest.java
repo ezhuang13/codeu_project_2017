@@ -30,6 +30,7 @@ public final class CompressionTest{
 	private Conversation testConvo;
 
 	@Before
+
 	public void setup() throws IOException{
 		final String authString = "50";
 		final String ids = "100.200.300.400.500.600.700.800";

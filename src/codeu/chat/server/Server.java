@@ -20,8 +20,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import java.sql.SQLException;
@@ -34,11 +36,7 @@ import codeu.chat.common.NetworkCode;
 import codeu.chat.common.Relay;
 import codeu.chat.common.User;
 import codeu.chat.database.Database;
-import codeu.chat.util.Logger;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Time;
-import codeu.chat.util.Timeline;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 import codeu.chat.util.connections.Connection;
 
 import codeu.chat.server.authentication.Authentication;
@@ -66,9 +64,13 @@ public final class Server {
 
   private final Authentication authentication;
 
+  private final String ASYMMETRIC_ALGORITHM = "RSA";
+  private PrivateKey privateKey;
+  public PublicKey publicKey;
+
   private final Storage storage;
 
-  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database) {
+  public Server(final Uuid id, final byte[] secret, final Relay relay, final Database database, final KeyPair keyPair) {
 
     this.id = id;
     this.secret = Arrays.copyOf(secret, secret.length);
@@ -81,6 +83,9 @@ public final class Server {
 
     this.controller = new Controller(id, model, authentication, storage);
     this.relay = relay;
+
+    this.privateKey = keyPair.getPrivate();
+    this.publicKey = keyPair.getPublic();
 
     // Server initialization finished.
     LOG.info("Server initialized.");
@@ -142,15 +147,16 @@ public final class Server {
 
     if (type == NetworkCode.NEW_MESSAGE_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Uuid author = Uuid.SERIALIZER.read(in);
-	  final Uuid token = Uuid.SERIALIZER.read(in);
+	    final Uuid token = Uuid.SERIALIZER.read(in);
       final Uuid conversation = Uuid.SERIALIZER.read(in);
-      final String content = Serializers.STRING.read(in);
+      final String content = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final Message message = controller.newMessage(author, token, conversation, content);
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_MESSAGE_RESPONSE);
-      Serializers.nullable(Message.SERIALIZER).write(out, message);
+      EncryptedSerializers.nullable(Message.ENCRYPTED_SERIALIZER).write(out, message, clientKey);
 
       timeline.scheduleNow(createSendToRelayEvent(
           author,
@@ -159,8 +165,8 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_USER_REQUEST) {
 
-      final String username = Serializers.STRING.read(in);
-      final String password = Serializers.STRING.read(in);
+      final String username = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
+      final String password = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final int result = controller.newUser(username, password);
 
@@ -169,13 +175,14 @@ public final class Server {
 
     } else if (type == NetworkCode.LOGIN_REQUEST) {
 
-      final String username = Serializers.STRING.read(in);
-      final String password = Serializers.STRING.read(in);
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
+      final String username = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
+      final String password = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
 
       final User user = controller.login(username, password);
 
       Serializers.INTEGER.write(out, NetworkCode.LOGIN_RESPONSE);
-      Serializers.nullable(User.SERIALIZER).write(out, user);
+      EncryptedSerializers.nullable(User.ENCRYPTED_SERIALIZER).write(out, user, clientKey);
       if (user == null) {
         Serializers.nullable(Uuid.SERIALIZER).write(out, null);
       } else {
@@ -184,48 +191,53 @@ public final class Server {
 
     } else if (type == NetworkCode.NEW_CONVERSATION_REQUEST) {
 
-      final String title = Serializers.STRING.read(in);
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
+      final String title = EncryptedSerializers.STRING.read(in, getServerPrivateKey());
       final Uuid owner = Uuid.SERIALIZER.read(in);
-	  final Uuid token = Uuid.SERIALIZER.read(in);
+	    final Uuid token = Uuid.SERIALIZER.read(in);
 
       final Conversation conversation = controller.newConversation(title, owner, token);
 
       Serializers.INTEGER.write(out, NetworkCode.NEW_CONVERSATION_RESPONSE);
-      Serializers.nullable(Conversation.SERIALIZER).write(out, conversation);
+      EncryptedSerializers.nullable(Conversation.ENCRYPTED_SERIALIZER).write(out, conversation, clientKey);
 
     } else if (type == NetworkCode.GET_USERS_BY_ID_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<User> users = view.getUsers(ids);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_USERS_BY_ID_RESPONSE);
-      Serializers.collection(User.SERIALIZER).write(out, users);
+      EncryptedSerializers.collection(User.ENCRYPTED_SERIALIZER).write(out, users, clientKey);
 
     } else if (type == NetworkCode.GET_ALL_CONVERSATIONS_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Collection<ConversationSummary> conversations = view.getAllConversations();
 
       Serializers.INTEGER.write(out, NetworkCode.GET_ALL_CONVERSATIONS_RESPONSE);
-      Serializers.collection(ConversationSummary.SERIALIZER).write(out, conversations);
+      EncryptedSerializers.collection(ConversationSummary.ENCRYPTED_SERIALIZER).write(out, conversations, clientKey);
 
     } else if (type == NetworkCode.GET_CONVERSATIONS_BY_ID_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<Conversation> conversations = view.getConversations(ids);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_CONVERSATIONS_BY_ID_RESPONSE);
-      Serializers.collection(Conversation.SERIALIZER).write(out, conversations);
+      EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).write(out, conversations, clientKey);
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_ID_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<Message> messages = view.getMessages(ids);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_ID_RESPONSE);
-      Serializers.collection(Message.SERIALIZER).write(out, messages);
+      EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).write(out, messages, clientKey);
 
     } else if (type == NetworkCode.GET_USER_GENERATION_REQUEST) {
 
@@ -234,34 +246,38 @@ public final class Server {
 
     } else if (type == NetworkCode.GET_USERS_EXCLUDING_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Collection<Uuid> ids = Serializers.collection(Uuid.SERIALIZER).read(in);
 
       final Collection<User> users = view.getUsersExcluding(ids);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_USERS_EXCLUDING_RESPONSE);
-      Serializers.collection(User.SERIALIZER).write(out, users);
+      EncryptedSerializers.collection(User.ENCRYPTED_SERIALIZER).write(out, users, clientKey);
 
     } else if (type == NetworkCode.GET_CONVERSATIONS_BY_TIME_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Time startTime = Time.SERIALIZER.read(in);
       final Time endTime = Time.SERIALIZER.read(in);
 
       final Collection<Conversation> conversations = view.getConversations(startTime, endTime);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_CONVERSATIONS_BY_TIME_RESPONSE);
-      Serializers.collection(Conversation.SERIALIZER).write(out, conversations);
+      EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).write(out, conversations, clientKey);
 
     } else if (type == NetworkCode.GET_CONVERSATIONS_BY_TITLE_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final String filter = Serializers.STRING.read(in);
 
       final Collection<Conversation> conversations = view.getConversations(filter);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_CONVERSATIONS_BY_TITLE_RESPONSE);
-      Serializers.collection(Conversation.SERIALIZER).write(out, conversations);
+      EncryptedSerializers.collection(Conversation.ENCRYPTED_SERIALIZER).write(out, conversations, clientKey);
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_TIME_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Uuid conversation = Uuid.SERIALIZER.read(in);
       final Time startTime = Time.SERIALIZER.read(in);
       final Time endTime = Time.SERIALIZER.read(in);
@@ -269,17 +285,23 @@ public final class Server {
       final Collection<Message> messages = view.getMessages(conversation, startTime, endTime);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_TIME_RESPONSE);
-      Serializers.collection(Message.SERIALIZER).write(out, messages);
+      EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).write(out, messages, clientKey);
 
     } else if (type == NetworkCode.GET_MESSAGES_BY_RANGE_REQUEST) {
 
+      final PublicKey clientKey = Encryptor.SERIALIZER.read(in);
       final Uuid rootMessage = Uuid.SERIALIZER.read(in);
       final int range = Serializers.INTEGER.read(in);
 
       final Collection<Message> messages = view.getMessages(rootMessage, range);
 
       Serializers.INTEGER.write(out, NetworkCode.GET_MESSAGES_BY_RANGE_RESPONSE);
-      Serializers.collection(Message.SERIALIZER).write(out, messages);
+      EncryptedSerializers.collection(Message.ENCRYPTED_SERIALIZER).write(out, messages, clientKey);
+
+    } else if (type == NetworkCode.SERVER_PUBLIC_KEY_REQUEST) {
+      
+      Serializers.INTEGER.write(out, NetworkCode.SERVER_PUBLIC_KEY_RESPONSE);
+      Encryptor.SERIALIZER.write(out, getServerPublicKey());
 
     } else {
 
@@ -349,4 +371,6 @@ public final class Server {
     };
   }
 
+  public PublicKey getServerPublicKey() {return publicKey;}
+  private PrivateKey getServerPrivateKey() {return privateKey;}
 }
