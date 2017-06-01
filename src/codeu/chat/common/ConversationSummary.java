@@ -98,7 +98,7 @@ public final class ConversationSummary implements ListViewable {
     public ConversationSummary read(InputStream in, PrivateKey key) throws IOException {
 
       byte[] conversationSummary = EncryptedSerializers.BYTES.read(in, key);
-      return CONVERSATION_SUMMARY.decompress(conversationSummary);\
+      return CONVERSATION_SUMMARY.decompress(conversationSummary);
 
     }
   };
