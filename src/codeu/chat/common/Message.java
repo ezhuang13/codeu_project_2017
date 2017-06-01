@@ -19,43 +19,48 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import codeu.chat.util.*;
-
+import codeu.chat.util.Serializer;
+import codeu.chat.util.Serializers;
+import codeu.chat.util.Compression;
+import codeu.chat.util.Compressions;
+import codeu.chat.util.Uuid;
+import codeu.chat.util.Time;
 
 public final class Message {
 
   public static final Compression<Message> MESSAGE = new Compression<Message>(){
 
-    @Override
-    public byte[] compress(Message data){
-      ByteArrayOutputStream msgStream = new ByteArrayOutputStream();
-      try{
-        toStream(msgStream, data);
-      }catch (IOException e){
-        e.printStackTrace();
+      @Override
+      public byte[] compress(Message data){
+          ByteArrayOutputStream msgStream = new ByteArrayOutputStream();
+          try{
+              toStream(msgStream, data);
+          }catch (IOException e){
+              e.printStackTrace();
+          }
+          byte[] byteMsg = msgStream.toByteArray();
+          return Compressions.BYTES.compress(byteMsg);
       }
-      byte[] byteMsg = msgStream.toByteArray();
-      return Compressions.BYTES.compress(byteMsg);
-    }
 
-    @Override
-    public Message decompress(byte[] data) {
+      @Override
+      public Message decompress(byte[] data) {
 
-      data = Compressions.BYTES.decompress(data);
+          data = Compressions.BYTES.decompress(data);
 
-      ByteArrayInputStream byteMsg = new ByteArrayInputStream(data);
-      //Must create a filler message in order to satisfy compiler
-      Message msg = new Message(Uuid.NULL, Uuid.NULL, Uuid.NULL, Time.now(), Uuid.NULL, "");
-      try {
-        msg = fromStream(byteMsg);
-      }catch (IOException e){
-        e.printStackTrace();
+          ByteArrayInputStream byteMsg = new ByteArrayInputStream(data);
+          //Must create a filler message in order to satisfy compiler
+          Message msg = new Message(Uuid.NULL, Uuid.NULL, Uuid.NULL, Time.now(), Uuid.NULL, "");
+          try {
+              msg = fromStream(byteMsg);
+          }catch (IOException e){
+              e.printStackTrace();
+          }
+          return msg;
       }
-      return msg;
-    }
   };
 
   public static final Serializer<Message> SERIALIZER = new Serializer<Message>() {
@@ -104,7 +109,6 @@ public final class Message {
 
       byte[] message = EncryptedSerializers.BYTES.read(in, key);
       return MESSAGE.decompress(message);
-
     }
   };
 
@@ -165,4 +169,5 @@ public final class Message {
         Serializers.STRING.read(in)
     );
   }
+
 }

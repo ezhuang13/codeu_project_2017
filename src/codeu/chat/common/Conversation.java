@@ -19,12 +19,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Collection;
 import java.util.HashSet;
 
-import codeu.chat.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+
+import codeu.chat.util.Serializer;
+import codeu.chat.util.Serializers;
+import codeu.chat.util.Compression;
+import codeu.chat.util.Compressions;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
 
 public final class Conversation {
 
@@ -42,7 +51,7 @@ public final class Conversation {
 
         return Compressions.BYTES.compress(byteConvo);
     }
-
+    
     @Override
     public Conversation decompress(byte[] data){
 
@@ -60,8 +69,8 @@ public final class Conversation {
     }
 
   };
-
-  public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
+  
+public static final Serializer<Conversation> SERIALIZER = new Serializer<Conversation>() {
 
     @Override
     public void write(OutputStream out, Conversation value) throws IOException {

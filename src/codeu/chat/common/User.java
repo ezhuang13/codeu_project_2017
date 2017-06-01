@@ -19,10 +19,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import codeu.chat.util.*;
+import codeu.chat.util.Serializer;
+import codeu.chat.util.Serializers;
+import codeu.chat.util.Compression;
+import codeu.chat.util.Compressions;
+import codeu.chat.util.Time;
+import codeu.chat.util.Uuid;
+
 
 public final class User {
 
@@ -35,7 +42,7 @@ public final class User {
       Serializers.STRING.write(out, value.name);
       Time.SERIALIZER.write(out, value.creation);
 
-    }
+  	}
 
     @Override
     public User read(InputStream in) throws IOException {
