@@ -14,14 +14,21 @@
 
 package codeu.chat.util;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-public interface Serializer<T> {
+/**
+ * This class allows for encryption and then serialization.
+ * @param <T> the type
+ */
+public interface EncryptedSerializer<T> {
 
-  void write(OutputStream out, T value) throws IOException;
+  void write(OutputStream out, T value, PublicKey publicKey) throws IOException;
 
-  T read(InputStream in) throws IOException;
+  T read(InputStream input, PrivateKey privateKey) throws IOException;
 
 }

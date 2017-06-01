@@ -19,15 +19,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Collection;
 import java.util.HashSet;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 
 public final class Conversation {
 
@@ -78,6 +75,25 @@ public final class Conversation {
     public Conversation read(InputStream in) throws IOException {
 
       byte[] conversation = Serializers.BYTES.read(in);
+      return CONVERSATION.decompress(conversation);
+
+    }
+  };
+
+  public static final EncryptedSerializer<Conversation> ENCRYPTED_SERIALIZER = new EncryptedSerializer<Conversation>() {
+
+    @Override
+    public void write(OutputStream out, Conversation value, PublicKey key) throws IOException {
+
+      byte[] conversation = CONVERSATION.compress(value);
+      EncryptedSerializers.BYTES.write(out, conversation, key);
+
+    }
+
+    @Override
+    public Conversation read(InputStream in, PrivateKey key) throws IOException {
+
+      byte[] conversation = EncryptedSerializers.BYTES.read(in, key);
       return CONVERSATION.decompress(conversation);
 
     }

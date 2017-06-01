@@ -19,13 +19,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-import codeu.chat.util.Serializer;
-import codeu.chat.util.Serializers;
-import codeu.chat.util.Compression;
-import codeu.chat.util.Compressions;
-import codeu.chat.util.Time;
-import codeu.chat.util.Uuid;
+import codeu.chat.util.*;
 
 public final class User {
 
@@ -38,7 +35,7 @@ public final class User {
       Serializers.STRING.write(out, value.name);
       Time.SERIALIZER.write(out, value.creation);
 
-  	}
+    }
 
     @Override
     public User read(InputStream in) throws IOException {
@@ -47,8 +44,30 @@ public final class User {
           Uuid.SERIALIZER.read(in),
           Serializers.STRING.read(in),
           Time.SERIALIZER.read(in)
-      	);
-  	}
+      );
+    }
+  };
+
+  public static final EncryptedSerializer<User> ENCRYPTED_SERIALIZER = new EncryptedSerializer<User>() {
+
+    @Override
+    public void write(OutputStream out, User value, PublicKey key) throws IOException {
+
+      Uuid.SERIALIZER.write(out, value.id);
+      EncryptedSerializers.STRING.write(out, value.name, key);
+      Time.SERIALIZER.write(out, value.creation);
+
+    }
+
+    @Override
+    public User read(InputStream in, PrivateKey key) throws IOException {
+
+      return new User(
+          Uuid.SERIALIZER.read(in),
+          EncryptedSerializers.STRING.read(in, key),
+          Time.SERIALIZER.read(in)
+      );
+    }
   };
 
   public final Uuid id;
@@ -62,7 +81,7 @@ public final class User {
     this.name = name;
     this.creation = creation;
     this.token = null; // This will be null unless explicitly set.
-                       // Is not transferred in the serializer for security.
+    // Is not transferred in the serializer for security.
 
   }
 
