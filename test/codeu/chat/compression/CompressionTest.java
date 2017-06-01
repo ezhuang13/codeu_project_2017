@@ -35,7 +35,7 @@ public final class CompressionTest{
 		final String authString = "50";
 		final String ids = "100.200.300.400.500.600.700.800";
 		author = Uuid.parse(authString);
-		next = Uuid.parse(ids);\
+		next = Uuid.parse(ids);
 		id = next.root();
 		prev = id.root();
 		testMsg = new Message(id, next, prev, time, author, "I am a test message!\nPlease compress me!!!");
