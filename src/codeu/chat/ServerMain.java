@@ -15,10 +15,13 @@
 
 package codeu.chat;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+
+import java.lang.SecurityException;
 
 import codeu.chat.common.Relay;
 import codeu.chat.common.Secret;
@@ -44,21 +47,39 @@ final class ServerMain {
     Logger.enableConsoleOutput();
 
     try {
-      Logger.enableFileOutput("chat_server_log.log");
+      Logger.enableFileOutput("bin/chat_server_log.log");
     } catch (IOException ex) {
       LOG.error(ex, "Failed to set logger to write to file");
     }
 
     LOG.info("============================= START OF LOG =============================");
 
-    final Uuid id = Uuid.fromString(args[0]);
     final byte[] secret = Secret.parse(args[1]);
 
     final int myPort = Integer.parseInt(args[2]);
+    
+    Uuid id = null;
+    try {
+      id = Uuid.parse(args[0]);
+    } catch (IOException ex) {
+      System.out.println("Invalid id - shutting down server");
+      System.exit(1);
+    }
 
     // This is the directory where it is safe to store data accross runs
     // of the server.
     final String persistentPath = args[3];
+
+    // Make sure the persistent directory exists.
+    File persistentDirectory = new File(persistentPath);
+    if (!persistentDirectory.exists()) {
+      try {
+        persistentDirectory.mkdir();
+      } catch (SecurityException ex) {
+        LOG.error(ex, "Failed to create persistent directory");
+        System.exit(1);
+      }
+    }
 
     final RemoteAddress relayAddress = args.length > 4 ?
                                        RemoteAddress.parse(args[4]) :
